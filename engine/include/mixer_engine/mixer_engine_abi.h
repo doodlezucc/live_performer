@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h> // NOLINT(*-deprecated-headers)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,12 +16,13 @@ extern "C" {
 #define MIXER_ENGINE_ABI_EXPORT __attribute__((visibility("default")))
 #endif
 
+typedef int32_t mixer_call_result;
 
-typedef enum {
-    OK = 0,
-    ERROR,
-    ERROR_INVALID_HANDLE,
-} mixer_call_result;
+enum {
+    MIXER_OK = 0,
+    MIXER_ERROR = 1,
+    MIXER_ERROR_INVALID_HANDLE = 2,
+};
 
 typedef char *mixer_error;
 

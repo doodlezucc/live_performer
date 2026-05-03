@@ -6,9 +6,9 @@
 
 #define ABI_TRY try {
 #define ABI_CATCH } catch (const std::exception &exception) { \
-    return asError(ERROR, exception.what(), outError);        \
+    return asError(MIXER_ERROR, exception.what(), outError);        \
 } catch (...) {                                               \
-    return asError(ERROR, "Unknown Error", outError);         \
+    return asError(MIXER_ERROR, "Unknown Error", outError);         \
 }
 
 char *copyString(const std::string &source);

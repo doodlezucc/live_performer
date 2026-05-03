@@ -31,5 +31,5 @@ mixer_call_result asError(const mixer_call_result result, const char *message, m
 
 // ReSharper disable once CppDFAConstantFunctionResult
 mixer_call_result asErrorInvalidHandle(mixer_error *outError) {
-    return asError(ERROR_INVALID_HANDLE, "Invalid handle", outError);
+    return asError(MIXER_ERROR_INVALID_HANDLE, "Invalid handle", outError);
 }

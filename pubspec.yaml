@@ -1,6 +1,6 @@
 name: live_performer
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0+1
 
 environment:
@@ -10,9 +10,15 @@ dependencies:
   flutter:
     sdk: flutter
 
+  ffi: ^2.2.0
+  code_assets: ^1.0.0
+  hooks: ^1.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  ffigen: ^20.1.1
   flutter_lints: ^6.0.0
 
 flutter:

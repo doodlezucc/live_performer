@@ -63,7 +63,7 @@ mixer_call_result mixer_audio_devices_list(
             };
         }
 
-        return OK;
+        return MIXER_OK;
     ABI_CATCH
 }
 
