@@ -4,8 +4,8 @@
 // ignore_for_file: type=lint, unused_import
 import 'dart:ffi' as ffi;
 
-@ffi.Native<ffi.Void Function(ffi.Pointer<mixer_error>)>()
-external void mixer_error_free(ffi.Pointer<mixer_error> error);
+@ffi.Native<ffi.Void Function(ffi.Pointer<mixer_error_t>)>()
+external void mixer_error_free(ffi.Pointer<mixer_error_t> error);
 
 @ffi.Native<ffi.Void Function()>()
 external void mixer_initialize();
@@ -13,50 +13,168 @@ external void mixer_initialize();
 @ffi.Native<ffi.Void Function()>()
 external void mixer_shutdown();
 
-@ffi.Native<ffi.Pointer<engine_handle> Function()>()
-external ffi.Pointer<engine_handle> mixer_engine_create();
+@ffi.Native<ffi.Pointer<engine_handle_t> Function()>()
+external ffi.Pointer<engine_handle_t> mixer_engine_create();
 
-@ffi.Native<ffi.Void Function(ffi.Pointer<engine_handle>)>()
-external void mixer_engine_destroy(ffi.Pointer<engine_handle> handle);
+@ffi.Native<ffi.Void Function(ffi.Pointer<engine_handle_t>)>()
+external void mixer_engine_destroy(ffi.Pointer<engine_handle_t> handle);
+
+@ffi.Native<ffi.Void Function(ffi.Pointer<mixer_audio_host_setup_t>)>()
+external void mixer_audio_host_setup_free(
+  ffi.Pointer<mixer_audio_host_setup_t> ref,
+);
+
+@ffi.Native<ffi.Void Function(ffi.Pointer<mixer_audio_host_overview_t>)>()
+external void mixer_audio_host_overview_free(
+  ffi.Pointer<mixer_audio_host_overview_t> ref,
+);
 
 @ffi.Native<
-  mixer_call_result Function(
-    ffi.Pointer<engine_handle>,
-    ffi.Pointer<ffi.Pointer<mixer_audio_device_type_array>>,
-    ffi.Pointer<mixer_error>,
+  mixer_call_result_t Function(
+    ffi.Pointer<engine_handle_t>,
+    ffi.Pointer<ffi.Pointer<mixer_audio_host_overview_t>>,
+    ffi.Pointer<mixer_error_t>,
   )
 >()
-external int mixer_audio_devices_list(
-  ffi.Pointer<engine_handle> handle,
-  ffi.Pointer<ffi.Pointer<mixer_audio_device_type_array>> out,
-  ffi.Pointer<mixer_error> outError,
+external int mixer_audio_config_get_overview(
+  ffi.Pointer<engine_handle_t> handle,
+  ffi.Pointer<ffi.Pointer<mixer_audio_host_overview_t>> out,
+  ffi.Pointer<mixer_error_t> outError,
 );
 
-@ffi.Native<ffi.Void Function(ffi.Pointer<mixer_audio_device_type_array>)>()
-external void mixer_audio_devices_list_free(
-  ffi.Pointer<mixer_audio_device_type_array> reference,
+@ffi.Native<
+  mixer_call_result_t Function(
+    ffi.Pointer<engine_handle_t>,
+    ffi.Int32,
+    ffi.Int32,
+    ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>>,
+    ffi.Pointer<mixer_error_t>,
+  )
+>()
+external int mixer_audio_config_reset(
+  ffi.Pointer<engine_handle_t> handle,
+  int numInputChannelsNeeded,
+  int numOutputChannelsNeeded,
+  ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>> outSetup,
+  ffi.Pointer<mixer_error_t> outError,
 );
 
-typedef mixer_call_result = ffi.Int32;
-typedef Dartmixer_call_result = int;
-typedef mixer_error = ffi.Pointer<ffi.Char>;
+@ffi.Native<
+  mixer_call_result_t Function(
+    ffi.Pointer<engine_handle_t>,
+    ffi.Pointer<ffi.Char>,
+    ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>>,
+    ffi.Pointer<mixer_error_t>,
+  )
+>()
+external int mixer_audio_config_switch_host_to(
+  ffi.Pointer<engine_handle_t> handle,
+  ffi.Pointer<ffi.Char> name,
+  ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>> outSetup,
+  ffi.Pointer<mixer_error_t> outError,
+);
 
-final class engine_handle extends ffi.Opaque {}
+@ffi.Native<
+  mixer_call_result_t Function(
+    ffi.Pointer<engine_handle_t>,
+    ffi.Pointer<ffi.Char>,
+    ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>>,
+    ffi.Pointer<mixer_error_t>,
+  )
+>()
+external int mixer_audio_config_apply_input_device(
+  ffi.Pointer<engine_handle_t> handle,
+  ffi.Pointer<ffi.Char> name,
+  ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>> outSetup,
+  ffi.Pointer<mixer_error_t> outError,
+);
 
-final class mixer_audio_device_type extends ffi.Struct {
+@ffi.Native<
+  mixer_call_result_t Function(
+    ffi.Pointer<engine_handle_t>,
+    ffi.Pointer<ffi.Char>,
+    ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>>,
+    ffi.Pointer<mixer_error_t>,
+  )
+>()
+external int mixer_audio_config_apply_output_device(
+  ffi.Pointer<engine_handle_t> handle,
+  ffi.Pointer<ffi.Char> name,
+  ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>> outSetup,
+  ffi.Pointer<mixer_error_t> outError,
+);
+
+@ffi.Native<
+  mixer_call_result_t Function(
+    ffi.Pointer<engine_handle_t>,
+    ffi.Double,
+    ffi.Int,
+    ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>>,
+    ffi.Pointer<mixer_error_t>,
+  )
+>()
+external int mixer_audio_config_apply_quality_configuration(
+  ffi.Pointer<engine_handle_t> handle,
+  double sampleRate,
+  int bufferSize,
+  ffi.Pointer<ffi.Pointer<mixer_audio_host_setup_t>> outSetup,
+  ffi.Pointer<mixer_error_t> outError,
+);
+
+typedef mixer_call_result_t = ffi.Int32;
+typedef Dartmixer_call_result_t = int;
+typedef mixer_error_t = ffi.Pointer<ffi.Char>;
+
+final class engine_handle_t extends ffi.Opaque {}
+
+final class mixer_audio_host_type_t extends ffi.Struct {
   external ffi.Pointer<ffi.Char> name;
 
-  @ffi.Size()
-  external int device_count;
+  @ffi.Bool()
+  external bool has_separate_inputs_and_outputs;
 
-  external ffi.Pointer<ffi.Pointer<ffi.Char>> device_names;
+  @ffi.Size()
+  external int input_device_count;
+
+  external ffi.Pointer<ffi.Pointer<ffi.Char>> input_devices;
+
+  @ffi.Size()
+  external int output_device_count;
+
+  external ffi.Pointer<ffi.Pointer<ffi.Char>> output_devices;
 }
 
-final class mixer_audio_device_type_array extends ffi.Struct {
-  @ffi.Size()
-  external int count;
+final class mixer_audio_host_setup_t extends ffi.Struct {
+  external ffi.Pointer<ffi.Char> input_device;
 
-  external ffi.Pointer<ffi.Pointer<mixer_audio_device_type>> device_types;
+  external ffi.Pointer<ffi.Char> output_device;
+
+  @ffi.Double()
+  external double sample_rate;
+
+  @ffi.Int32()
+  external int buffer_size;
+
+  @ffi.Size()
+  external int available_sample_rate_count;
+
+  external ffi.Pointer<ffi.Double> available_sample_rates;
+
+  @ffi.Size()
+  external int available_buffer_size_count;
+
+  external ffi.Pointer<ffi.Int32> available_buffer_sizes;
+}
+
+final class mixer_audio_host_overview_t extends ffi.Struct {
+  external ffi.Pointer<ffi.Char> current_type;
+
+  @ffi.Size()
+  external int available_type_count;
+
+  external ffi.Pointer<mixer_audio_host_type_t> available_types;
+
+  external mixer_audio_host_setup_t current_setup;
 }
 
 const int MIXER_OK = 0;

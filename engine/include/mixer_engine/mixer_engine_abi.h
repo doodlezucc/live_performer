@@ -4,6 +4,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
 #if defined(_WIN32)
@@ -16,7 +18,7 @@ extern "C" {
 #define MIXER_ENGINE_ABI_EXPORT __attribute__((visibility("default")))
 #endif
 
-typedef int32_t mixer_call_result;
+typedef int32_t mixer_call_result_t;
 
 enum {
     MIXER_OK = 0,
@@ -24,42 +26,100 @@ enum {
     MIXER_ERROR_INVALID_HANDLE = 2,
 };
 
-typedef char *mixer_error;
+typedef char *mixer_error_t;
 
-MIXER_ENGINE_ABI_EXPORT void mixer_error_free(mixer_error *error);
+MIXER_ENGINE_ABI_EXPORT void mixer_error_free(mixer_error_t *error);
 
 MIXER_ENGINE_ABI_EXPORT void mixer_initialize();
 
 MIXER_ENGINE_ABI_EXPORT void mixer_shutdown();
 
 
-typedef struct engine_handle engine_handle;
+typedef struct engine_handle_t engine_handle_t;
 
-MIXER_ENGINE_ABI_EXPORT engine_handle *mixer_engine_create();
+MIXER_ENGINE_ABI_EXPORT engine_handle_t *mixer_engine_create();
 
-MIXER_ENGINE_ABI_EXPORT void mixer_engine_destroy(
-    const engine_handle *handle
-);
+MIXER_ENGINE_ABI_EXPORT void mixer_engine_destroy(engine_handle_t *handle);
 
 
 typedef struct {
     char *name;
-    size_t device_count;
-    char **device_names;
-} mixer_audio_device_type;
+    bool has_separate_inputs_and_outputs;
+
+    size_t input_device_count;
+    char **input_devices;
+
+    size_t output_device_count;
+    char **output_devices;
+} mixer_audio_host_type_t;
 
 typedef struct {
-    size_t count;
-    mixer_audio_device_type **device_types;
-} mixer_audio_device_type_array;
+    char *input_device;
+    char *output_device;
+    double sample_rate;
+    int32_t buffer_size;
 
-MIXER_ENGINE_ABI_EXPORT mixer_call_result mixer_audio_devices_list(
-    engine_handle *handle,
-    mixer_audio_device_type_array **out,
-    mixer_error *outError
+    size_t available_sample_rate_count;
+    double *available_sample_rates;
+
+    size_t available_buffer_size_count;
+    int32_t *available_buffer_sizes;
+} mixer_audio_host_setup_t;
+
+MIXER_ENGINE_ABI_EXPORT void mixer_audio_host_setup_free(mixer_audio_host_setup_t *ref);
+
+typedef struct {
+    char *current_type;
+    size_t available_type_count;
+    mixer_audio_host_type_t *available_types;
+    mixer_audio_host_setup_t current_setup;
+} mixer_audio_host_overview_t;
+
+MIXER_ENGINE_ABI_EXPORT void mixer_audio_host_overview_free(mixer_audio_host_overview_t *ref);
+
+
+MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_get_overview(
+    engine_handle_t *handle,
+    mixer_audio_host_overview_t **out,
+    mixer_error_t *outError
 );
 
-MIXER_ENGINE_ABI_EXPORT void mixer_audio_devices_list_free(const mixer_audio_device_type_array *reference);
+MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_reset(
+    engine_handle_t *handle,
+    int32_t numInputChannelsNeeded,
+    int32_t numOutputChannelsNeeded,
+    mixer_audio_host_setup_t **outSetup,
+    mixer_error_t *outError
+);
+
+MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_switch_host_to(
+    engine_handle_t *handle,
+    char *name,
+    mixer_audio_host_setup_t **outSetup,
+    mixer_error_t *outError
+);
+
+MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_input_device(
+    engine_handle_t *handle,
+    char *name,
+    mixer_audio_host_setup_t **outSetup,
+    mixer_error_t *outError
+);
+
+MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_output_device(
+    engine_handle_t *handle,
+    char *name,
+    mixer_audio_host_setup_t **outSetup,
+    mixer_error_t *outError
+);
+
+MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_quality_configuration(
+    engine_handle_t *handle,
+    double sampleRate,
+    int bufferSize,
+    mixer_audio_host_setup_t **outSetup,
+    mixer_error_t *outError
+);
 
 #ifdef __cplusplus
 }
