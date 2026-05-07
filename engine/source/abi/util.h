@@ -71,7 +71,7 @@ T *copyArrayAs(const juce::Array<S> &source) {
     return destination;
 }
 
-template<typename T, std::invocable<T> TForEach>
+template<typename T, std::invocable<T &> TForEach>
 void freeArray(T *array, const size_t count, TForEach freeItem) {
     for (size_t i = 0; i < count; i++) {
         freeItem(array[i]);

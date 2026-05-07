@@ -2,21 +2,14 @@
 
 #include <stdint.h> // NOLINT(*-deprecated-headers)
 
+
 #ifdef __cplusplus
 extern "C" {
 #else
 #include <stdbool.h>
 #endif
 
-#if defined(_WIN32)
-#if defined(MIXER_ENGINE_ABI_BUILDING)
-#define MIXER_ENGINE_ABI_EXPORT __declspec(dllexport)
-#else
-#define MIXER_ENGINE_ABI_EXPORT __declspec(dllimport)
-#endif
-#else
-#define MIXER_ENGINE_ABI_EXPORT __attribute__((visibility("default")))
-#endif
+#include "generated_structs.h"
 
 typedef int32_t mixer_call_result_t;
 
@@ -28,18 +21,18 @@ enum {
 
 typedef char *mixer_error_t;
 
-MIXER_ENGINE_ABI_EXPORT void mixer_error_free(mixer_error_t *error);
+MIXER_ABI_EXPORT void mixer_error_free(mixer_error_t *error);
 
-MIXER_ENGINE_ABI_EXPORT void mixer_initialize();
+MIXER_ABI_EXPORT void mixer_initialize();
 
-MIXER_ENGINE_ABI_EXPORT void mixer_shutdown();
+MIXER_ABI_EXPORT void mixer_shutdown();
 
 
 typedef struct engine_handle_t engine_handle_t;
 
-MIXER_ENGINE_ABI_EXPORT engine_handle_t *mixer_engine_create();
+MIXER_ABI_EXPORT engine_handle_t *mixer_engine_create();
 
-MIXER_ENGINE_ABI_EXPORT void mixer_engine_destroy(engine_handle_t *handle);
+MIXER_ABI_EXPORT void mixer_engine_destroy(engine_handle_t *handle);
 
 
 typedef struct {
@@ -66,7 +59,7 @@ typedef struct {
     int32_t *available_buffer_sizes;
 } mixer_audio_host_setup_t;
 
-MIXER_ENGINE_ABI_EXPORT void mixer_audio_host_setup_free(mixer_audio_host_setup_t *ref);
+MIXER_ABI_EXPORT void mixer_audio_host_setup_free(mixer_audio_host_setup_t *ref);
 
 typedef struct {
     char *current_type;
@@ -75,16 +68,16 @@ typedef struct {
     mixer_audio_host_setup_t current_setup;
 } mixer_audio_host_overview_t;
 
-MIXER_ENGINE_ABI_EXPORT void mixer_audio_host_overview_free(mixer_audio_host_overview_t *ref);
+MIXER_ABI_EXPORT void mixer_audio_host_overview_free(mixer_audio_host_overview_t *ref);
 
 
-MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_get_overview(
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_get_overview(
     engine_handle_t *handle,
     mixer_audio_host_overview_t **out,
     mixer_error_t *outError
 );
 
-MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_reset(
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_reset(
     engine_handle_t *handle,
     int32_t numInputChannelsNeeded,
     int32_t numOutputChannelsNeeded,
@@ -92,28 +85,28 @@ MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_reset(
     mixer_error_t *outError
 );
 
-MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_switch_host_to(
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_switch_host_to(
     engine_handle_t *handle,
     char *name,
     mixer_audio_host_setup_t **outSetup,
     mixer_error_t *outError
 );
 
-MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_input_device(
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_input_device(
     engine_handle_t *handle,
     char *name,
     mixer_audio_host_setup_t **outSetup,
     mixer_error_t *outError
 );
 
-MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_output_device(
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_output_device(
     engine_handle_t *handle,
     char *name,
     mixer_audio_host_setup_t **outSetup,
     mixer_error_t *outError
 );
 
-MIXER_ENGINE_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_quality_configuration(
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_quality_configuration(
     engine_handle_t *handle,
     double sampleRate,
     int bufferSize,

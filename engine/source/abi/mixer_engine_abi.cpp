@@ -35,7 +35,7 @@ void mixer_engine_destroy(engine_handle_t *handle) {
 }
 
 
-void mixer_audio_host_setup_free_members(mixer_audio_host_setup_t ref) {
+void mixer_audio_host_setup_free_members(mixer_audio_host_setup_t &ref) {
     freeString(ref.input_device);
     freeString(ref.output_device);
     freeArray(ref.available_sample_rates);
@@ -49,17 +49,17 @@ void mixer_audio_host_setup_free(mixer_audio_host_setup_t *ref) {
     delete ref;
 }
 
+void mixer_audio_host_type_free_members(mixer_audio_host_type_t &ref) {
+    freeString(ref.name);
+    freeStringArray(ref.input_devices, ref.input_device_count);
+    freeStringArray(ref.output_devices, ref.output_device_count);
+}
 
 void mixer_audio_host_overview_free(mixer_audio_host_overview_t *ref) {
     if (ref == nullptr) return;
 
     freeString(ref->current_type);
-
-    freeArray(ref->available_types, ref->available_type_count, [](auto type) {
-        freeString(type.name);
-        freeStringArray(type.input_devices, type.input_device_count);
-        freeStringArray(type.output_devices, type.output_device_count);
-    });
+    freeArray(ref->available_types, ref->available_type_count, mixer_audio_host_type_free_members);
 
     mixer_audio_host_setup_free_members(ref->current_setup);
     delete ref;

@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:live_performer/structs.dart';
 
 import 'mixer_engine.g.dart';
 
@@ -78,77 +79,18 @@ class AudioConfig {
             mixer_audio_config_get_overview(handle, outOverview, outError),
       );
 
+      final thing = arena<mixer_audio_host_setup_t>();
+      thing.ref
+        ..available_buffer_size_count = 0
+        ..available_sample_rate_count = 0;
+
       try {
         final overview = outOverview.value.ref;
+        ''.toNativeUtf8(allocator: arena);
         return overview.toDart();
       } finally {
         mixer_audio_host_overview_free(outOverview.value);
       }
     });
   }
-}
-
-typedef AudioHostOverview = ({
-  String currentType,
-  List<AudioHostType> availableTypes,
-  AudioHostSetup currentSetup,
-});
-
-extension on mixer_audio_host_overview_t {
-  AudioHostOverview toDart() => (
-    currentType: current_type.cast<Utf8>().toDartString(),
-    availableTypes: List.generate(
-      available_type_count,
-      (i) => (available_types + i).ref.toDart(),
-    ),
-    currentSetup: current_setup.toDart(),
-  );
-}
-
-typedef AudioHostType = ({
-  String name,
-  bool hasSeparateInputsAndOutputs,
-  List<String> inputDevices,
-  List<String> outputDevices,
-});
-
-extension on mixer_audio_host_type_t {
-  AudioHostType toDart() => (
-    name: name.cast<Utf8>().toDartString(),
-    hasSeparateInputsAndOutputs: has_separate_inputs_and_outputs,
-    inputDevices: List.generate(
-      input_device_count,
-      (i) => (input_devices + i).value.cast<Utf8>().toDartString(),
-    ),
-    outputDevices: List.generate(
-      output_device_count,
-      (i) => (output_devices + i).value.cast<Utf8>().toDartString(),
-    ),
-  );
-}
-
-typedef AudioHostSetup = ({
-  String inputDevice,
-  String outputDevice,
-  double sampleRate,
-  int bufferSize,
-  List<double> availableSampleRates,
-  List<int> availableBufferSizes,
-});
-
-extension on mixer_audio_host_setup_t {
-  AudioHostSetup toDart() => (
-    inputDevice: input_device.cast<Utf8>().toDartString(),
-    outputDevice: output_device.cast<Utf8>().toDartString(),
-    sampleRate: sample_rate,
-    bufferSize: buffer_size,
-    availableSampleRates: List.generate(
-      available_sample_rate_count,
-      (i) => (available_sample_rates + i).value,
-    ),
-    availableBufferSizes: List.generate(
-      available_buffer_size_count,
-      (i) => (available_buffer_sizes + i).value,
-    ),
-  );
 }
