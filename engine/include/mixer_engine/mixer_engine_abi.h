@@ -9,7 +9,7 @@ extern "C" {
 #include <stdbool.h>
 #endif
 
-#include "generated_structs.h"
+#include "structs.g.h"
 
 typedef int32_t mixer_call_result_t;
 
