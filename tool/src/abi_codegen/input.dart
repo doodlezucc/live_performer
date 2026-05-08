@@ -11,17 +11,19 @@ class Input {
 }
 
 class Files {
-  final Uri entrypointHeaderFile;
+  final Uri entrypointHeader;
 
-  final Uri generatedCHeaderFile;
-  final Uri generatedCppFile;
-  final Uri generatedDartFile;
+  final Uri generatedCHeader;
+  final Uri generatedCpp;
+  final Uri generatedDart;
+  final Uri generatedDartStructs;
 
   Files({
-    required this.entrypointHeaderFile,
-    required this.generatedCHeaderFile,
-    required this.generatedCppFile,
-    required this.generatedDartFile,
+    required this.entrypointHeader,
+    required this.generatedCHeader,
+    required this.generatedCpp,
+    required this.generatedDart,
+    required this.generatedDartStructs,
   });
 }
 

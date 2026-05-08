@@ -1,59 +1,35 @@
 import 'dart:io';
 
-import 'package:ffigen/ffigen.dart';
-
+import 'generators/abi_generator.dart';
 import 'generators/abi_generator_c_header.dart';
 import 'generators/abi_generator_cpp.dart';
 import 'generators/abi_generator_dart.dart';
+import 'generators/ffigen.dart';
 import 'input.dart';
 
-Future<void> generateAbiBridge(Input input) async {
-  final cHeaderOutput = AbiGeneratorCHeader().generate(input);
+enum GenerateMode { all, onlyGenerateDartFromHeader }
 
-  await File.fromUri(
-    input.files.generatedCHeaderFile,
-  ).writeAsString(cHeaderOutput);
+Future<void> generateAbiBridge({
+  required Input input,
+  GenerateMode mode = .all,
+}) async {
+  final files = input.files;
 
-  final customDartOutput = AbiGeneratorDart().generate(input);
+  if (mode == .all) {
+    await AbiGeneratorCHeader().generateFile(input, files.generatedCHeader);
+    await AbiGeneratorCpp().generateFile(input, files.generatedCpp);
+    await AbiGeneratorDart().generateFile(input, files.generatedDartStructs);
+  }
 
-  final relevantHeaderRootDirectory = input.files.entrypointHeaderFile.resolve(
-    '..',
+  await generateFfigenOutput(
+    entryPointerHeaderFile: files.entrypointHeader,
+    generatedDartFile: files.generatedDart,
   );
+}
 
-  FfiGenerator(
-    output: Output(dartFile: input.files.generatedDartFile),
-
-    functions: .includeAll,
-    structs: .includeAll,
-    enums: .includeAll,
-    typedefs: .includeAll,
-    unnamedEnums: .includeAll,
-
-    headers: Headers(
-      entryPoints: [input.files.entrypointHeaderFile],
-      include: (header) {
-        return header.toString().startsWith(
-          relevantHeaderRootDirectory.toString(),
-        );
-      },
-      compilerOptions: ["-DMIXER_ENGINE_ABI_BUILDING=1"],
-    ),
-  ).generate();
-
-  final ffigenOutputFile = File.fromUri(input.files.generatedDartFile);
-
-  final ffigenContents = await ffigenOutputFile.readAsString();
-
-  await ffigenOutputFile.writeAsString('''
-${input.options.preambleDart}
-
-$ffigenContents
-
-$customDartOutput''');
-
-  final cppOutput = AbiGeneratorCpp().generate(input);
-
-  await File.fromUri(
-    input.files.generatedCppFile,
-  ).writeAsString('\n$cppOutput');
+extension on AbiGenerator {
+  Future<void> generateFile(Input input, Uri outputFile) async {
+    final output = generate(input);
+    await File.fromUri(outputFile).writeAsString(output);
+  }
 }

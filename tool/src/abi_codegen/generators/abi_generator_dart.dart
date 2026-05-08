@@ -2,13 +2,16 @@ import '../input.dart';
 import '../type_info.dart';
 import 'abi_generator.dart';
 
-class AbiGeneratorDart {
+class AbiGeneratorDart extends AbiGenerator {
   late InputOptions _options;
 
+  @override
   String generate(Input input) {
     _options = input.options;
 
     final contents = [
+      input.options.preambleDart,
+
       ...input.structs.entries.map(
         (entry) =>
             _generateStruct(structName: entry.key, definition: entry.value),
@@ -114,7 +117,7 @@ class AbiGeneratorDart {
   }) {
     return trimIndent('''
       extension ${structName}_toNative on $structName {
-        ffi.Pointer<$nativeName> toNative(Arena arena) =>
+        Pointer<$nativeName> toNative(Arena arena) =>
             arena<$nativeName>()..ref.assignFromDart(arena, this);
       }
     ''');
@@ -126,7 +129,7 @@ class AbiGeneratorDart {
     required String nativeFreeFunctionName,
   }) {
     return trimIndent('''
-      extension ${structName}_free on ffi.Pointer<$nativeName> {
+      extension ${structName}_free on Pointer<$nativeName> {
         void free() => $nativeFreeFunctionName(this);
       }
     ''');
