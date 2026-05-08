@@ -29,12 +29,12 @@ class AbiGeneratorDart {
 
     return [
       _generateStructTypedef(name: structName, definition: definition),
-      _generateStructExtensionToNative(
+      _generateStructExtensionMapping(
         structName: structName,
         nativeName: nativeName,
         definition: definition,
       ),
-      _generateStructExtensionToDart(
+      _generateStructExtensionToNative(
         structName: structName,
         nativeName: nativeName,
         definition: definition,
@@ -67,56 +67,55 @@ class AbiGeneratorDart {
     ''');
   }
 
-  String _generateStructExtensionToNative({
+  String _generateStructExtensionMapping({
     required String structName,
     required String nativeName,
     required StructDefinition definition,
   }) {
-    final allFieldAssignments = definition.fields.entries.expand((entry) {
-      final fieldName = entry.key;
-      final fieldTypeInfo = FieldTypeInfo.of(entry.value, options: _options);
-
-      return fieldTypeInfo.dartAssignFieldToNative(fieldName);
-    }).toList();
-
-    final assignmentsChain = allFieldAssignments.length == 1
-        ? '.${allFieldAssignments.single}'
-        : allFieldAssignments
-              .map((assignment) => '\n            ..$assignment')
-              .join();
-
-    return trimIndent('''
-      extension ${structName}_toNative on $structName {
-        ffi.Pointer<$nativeName> toNative(Arena arena) {
-          final result = arena<$nativeName>();
-          result.ref$assignmentsChain;
-          return result;
-        }
-      }
-    ''');
-  }
-
-  String _generateStructExtensionToDart({
-    required String structName,
-    required String nativeName,
-    required StructDefinition definition,
-  }) {
-    final allParameters = definition.fields.entries.map((entry) {
+    final allToDartParameters = definition.fields.entries.map((entry) {
       final fieldName = entry.key;
       final fieldTypeInfo = FieldTypeInfo.of(entry.value, options: _options);
 
       return '$fieldName: ${fieldTypeInfo.dartConvertFieldFromNative(fieldName)}';
     }).toList();
 
-    final parametersChain = allParameters
+    final toDartParametersChain = allToDartParameters
         .map((line) => '$line,')
         .join('\n          ');
 
+    final allFieldAssignments = definition.fields.entries.expand((entry) {
+      final fieldName = entry.key;
+      final fieldTypeInfo = FieldTypeInfo.of(entry.value, options: _options);
+
+      return fieldTypeInfo.dartAssignFieldToNative(fieldName, 'ref.$fieldName');
+    }).toList();
+
+    final assignmentsChain = allFieldAssignments.length == 1
+        ? '..${allFieldAssignments.single}'
+        : allFieldAssignments
+              .map((assignment) => '\n            ..$assignment')
+              .join();
+
     return trimIndent('''
-      extension ${structName}_toDart on $nativeName {
+      extension ${structName}_Mapping on $nativeName {
         $structName toDart() => (
-          $parametersChain
+          $toDartParametersChain
         );
+
+        void assignFromDart(Arena arena, $structName ref) => this$assignmentsChain;
+      }
+    ''');
+  }
+
+  String _generateStructExtensionToNative({
+    required String structName,
+    required String nativeName,
+    required StructDefinition definition,
+  }) {
+    return trimIndent('''
+      extension ${structName}_toNative on $structName {
+        ffi.Pointer<$nativeName> toNative(Arena arena) =>
+            arena<$nativeName>()..ref.assignFromDart(arena, this);
       }
     ''');
   }

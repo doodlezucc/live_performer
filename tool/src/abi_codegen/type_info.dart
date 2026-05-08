@@ -26,9 +26,9 @@ sealed class FieldTypeInfo<T extends FieldType> {
 
   String dartConvertFieldToNative(String dartField) => dartField;
 
-  List<String> dartAssignFieldToNative(String name) {
-    return ['$name = ${dartConvertFieldToNative(name)}'];
-  }
+  List<String> dartAssignFieldToNative(String nativeVar, String dartVar) => [
+    '$nativeVar = ${dartConvertFieldToNative(dartVar)}',
+  ];
 
   String dartConvertFieldFromNative(String nativeField) => nativeField;
 
@@ -83,7 +83,7 @@ final class StringTypeInfo extends FieldTypeInfo<StringType>
 
   @override
   String dartConvertFieldToNative(String dartField) =>
-      '$dartField.toNative(arena)';
+      '$dartField.toUtf8(arena)';
 
   @override
   String dartConvertFieldFromNative(String nativeField) =>
@@ -105,18 +105,27 @@ final class ListTypeInfo extends FieldTypeInfo<ListType> {
   String get dartName => 'List<${elementTypeInfo.dartName}>';
 
   @override
-  String dartConvertFieldToNative(String dartField) =>
-      '$dartField.toNative((e) => ${elementTypeInfo.dartConvertFieldToNative('e')})';
+  String dartConvertFieldToNative(
+    String dartField,
+  ) => switch (elementTypeInfo) {
+    StringTypeInfo() => '$dartField.toUtf8Array(arena)',
+
+    StructTypeInfo(cName: final nativeStructName) =>
+      '$dartField.toNativeArray(arena<$nativeStructName>, (p, i, e) => p[i].assignFromDart(arena, e))',
+
+    _ =>
+      '$dartField.toNativeArray(arena<${elementTypeInfo.dartName}>, (p, i, e) => p[i] = e)',
+  };
 
   @override
-  List<String> dartAssignFieldToNative(String name) => [
-    '${name}_count = $name.length',
-    '$name = ${dartConvertFieldToNative(name)}',
+  List<String> dartAssignFieldToNative(String nativeVar, String dartVar) => [
+    '${nativeVar}_count = $dartVar.length',
+    '$nativeVar = ${dartConvertFieldToNative(dartVar)}',
   ];
 
   @override
   String dartConvertFieldFromNative(String nativeField) =>
-      '$nativeField.toList(${nativeField}_count, (e) => ${elementTypeInfo.dartConvertFieldFromNative('e')})';
+      '$nativeField.toList(${nativeField}_count, (p, i) => ${elementTypeInfo.dartConvertFieldFromNative('p[i]')})';
 
   @override
   List<String> cDeclareInStruct(String name) => [
@@ -148,11 +157,6 @@ final class StructTypeInfo extends FieldTypeInfo<StructType>
 
   @override
   String dartConvertFieldToNative(String dartField) => '$dartField.toNative()';
-
-  @override
-  List<String> dartAssignFieldToNative(String name) => [
-    '$name = ${dartConvertFieldToNative(name)}',
-  ];
 
   @override
   String dartConvertFieldFromNative(String nativeField) =>
