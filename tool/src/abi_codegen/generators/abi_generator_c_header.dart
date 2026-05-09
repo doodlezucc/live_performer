@@ -12,10 +12,14 @@ class AbiGeneratorCHeader extends AbiGenerator {
     final contents = [
       input.options.preambleCHeader,
 
+      _startDisableNameMangling,
+
       ...input.structs.entries.map(
         (entry) =>
             _generateStruct(structName: entry.key, definition: entry.value),
       ),
+
+      _endisableNameMangling,
     ].join('\n\n');
 
     return '$contents\n';
@@ -69,3 +73,15 @@ class AbiGeneratorCHeader extends AbiGenerator {
     return '$exportMacro $functionSignature;';
   }
 }
+
+final _startDisableNameMangling = trimIndent('''  
+  #ifdef __cplusplus
+  extern "C" {
+  #endif
+''');
+
+final _endisableNameMangling = trimIndent('''  
+  #ifdef __cplusplus
+  }
+  #endif
+''');

@@ -36,7 +36,7 @@ sealed class FieldTypeInfo<T extends FieldType> {
   List<String> cCallFreeFunction(String variable);
 }
 
-base mixin ListableTypeInfo<T extends FieldType> on FieldTypeInfo<T> {
+mixin ListableTypeInfo<T extends FieldType> on FieldTypeInfo<T> {
   @override
   List<String> cDeclareInStruct(String name) => ['$cName $name'];
 
@@ -44,15 +44,18 @@ base mixin ListableTypeInfo<T extends FieldType> on FieldTypeInfo<T> {
   List<String> cCallFreeFunction(String variable) => [];
 
   String get cName;
+  String get dartFfiName => dartName;
 }
 
 final class BoolTypeInfo extends FieldTypeInfo<BoolType> with ListableTypeInfo {
   const BoolTypeInfo();
 
   @override
+  final String cName = 'bool';
+  @override
   final String dartName = 'bool';
   @override
-  final String cName = 'bool';
+  final String dartFfiName = 'Bool';
 }
 
 final class IntTypeInfo extends FieldTypeInfo<IntType> with ListableTypeInfo {
@@ -62,6 +65,8 @@ final class IntTypeInfo extends FieldTypeInfo<IntType> with ListableTypeInfo {
   final String dartName = 'int';
   @override
   final String cName = 'int32_t';
+  @override
+  final String dartFfiName = 'Int32';
 }
 
 final class DoubleTypeInfo extends FieldTypeInfo<DoubleType>
@@ -72,6 +77,8 @@ final class DoubleTypeInfo extends FieldTypeInfo<DoubleType>
   final String dartName = 'double';
   @override
   final String cName = 'double';
+  @override
+  final String dartFfiName = 'Double';
 }
 
 final class StringTypeInfo extends FieldTypeInfo<StringType>
@@ -114,7 +121,7 @@ final class ListTypeInfo extends FieldTypeInfo<ListType> {
       '$dartField.toNativeArray(arena<$nativeStructName>, (p, i, e) => p[i].assignFromDart(arena, e))',
 
     _ =>
-      '$dartField.toNativeArray(arena<${elementTypeInfo.dartName}>, (p, i, e) => p[i] = e)',
+      '$dartField.toNativeArray(arena<${elementTypeInfo.dartFfiName}>, (p, i, e) => p[i] = e)',
   };
 
   @override
@@ -161,6 +168,11 @@ final class StructTypeInfo extends FieldTypeInfo<StructType>
   @override
   String dartConvertFieldFromNative(String nativeField) =>
       '$nativeField.toDart()';
+
+  @override
+  List<String> dartAssignFieldToNative(String nativeVar, String dartVar) => [
+    '$nativeVar.assignFromDart(arena, $dartVar)',
+  ];
 
   @override
   String get cName => options.renameStructInC(structType.name);

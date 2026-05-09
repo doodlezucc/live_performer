@@ -1,8 +1,8 @@
 import 'dart:ffi';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:live_performer/mixer_engine.dart';
-import 'package:live_performer/mixer_engine.g.dart';
+import 'package:live_performer/mixer_engine/mixer_engine.dart';
+import 'package:live_performer/mixer_engine/mixer_engine.g.dart';
 
 void main() {
   test('Run FFI thingy', () {
@@ -20,6 +20,8 @@ void main() {
     );
 
     final overview = engine.audioConfig.getOverview();
+
+    print(overview.availableTypes.map((type) => type.name).join(', '));
 
     mixer_engine_destroy(handle);
 

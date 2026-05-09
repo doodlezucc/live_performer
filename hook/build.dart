@@ -12,7 +12,7 @@ void main(List<String> args) async {
       output.assets.code.add(
         CodeAsset(
           package: packageName,
-          name: 'mixer_engine.g.dart',
+          name: 'mixer_engine/mixer_engine.g.dart',
           linkMode: DynamicLoadingBundled(),
           file: assetPathInPackage,
         ),
