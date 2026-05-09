@@ -61,6 +61,13 @@ target_compile_definitions(SharedCode
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
 
+        # Enable support for loading plugins
+        JUCE_PLUGINHOST_LADSPA=1
+        JUCE_PLUGINHOST_LV2=1
+        JUCE_PLUGINHOST_VST3=1
+        # JUCE_PLUGINHOST_VST=1
+        # JUCE_PLUGINHOST_ARA=1
+
         # Uncomment if you are paying for a an Indie/Pro license or releasing under GPLv3
         # JUCE_DISPLAY_SPLASH_SCREEN=0
 

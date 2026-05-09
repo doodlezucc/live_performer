@@ -4,6 +4,9 @@
 
 class AudioConfig {
 public:
+    AudioConfig(juce::AudioDeviceManager &audioDeviceManager) : audioDeviceManager(audioDeviceManager) {
+    }
+
     struct HostType {
         juce::String name;
         bool hasSeparateInputsAndOutputs;
@@ -103,9 +106,9 @@ public:
     }
 
 private:
-    juce::AudioDeviceManager audioDeviceManager;
+    juce::AudioDeviceManager &audioDeviceManager;
 
-    HostSetup getCurrentSetup() const {
+    HostSetup getCurrentSetup() {
         const auto selectedDevice = audioDeviceManager.getCurrentAudioDevice();
         const auto setup = audioDeviceManager.getAudioDeviceSetup();
 
@@ -134,4 +137,6 @@ private:
             throw std::runtime_error(error.toStdString());
         }
     }
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioConfig);
 };
