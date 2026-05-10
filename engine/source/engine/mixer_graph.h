@@ -50,18 +50,25 @@ public:
             }
         }
 
+        juce::PluginDescription examplePlugin;
+
         for (const auto &plugin: pluginList.getTypes()) {
             std::cout << "Plugin " << plugin.descriptiveName << " - " << plugin.pluginFormatName << std::endl;
+
+            if (plugin.descriptiveName.equalsIgnoreCase("GxEcho-Stereo")) {
+                examplePlugin = plugin;
+            }
         }
 
-        const auto &valhallaSupermassive = pluginList.getTypes().getLast();
+        if (examplePlugin.fileOrIdentifier.isEmpty()) {
+            throw "Example plugin not found";
+        }
 
         juce::String error;
-        auto pluginInstance = formatManager.createPluginInstance(valhallaSupermassive, 48000.0, 480, error);
+        auto pluginInstance = formatManager.createPluginInstance(examplePlugin, 48000.0, 512, error);
 
         if (pluginInstance == nullptr) {
-            std::cerr << "Failed to create plugin instance: " << error << std::endl;
-            return;
+            throw "Failed to create plugin instance";
         }
 
         pluginInstance->enableAllBuses();
@@ -69,12 +76,8 @@ public:
         const auto pluginNode = processor.graph->addNode(std::move(pluginInstance));
 
         for (int channel = 0; channel < 2; channel++) {
-            // processor.graph->addConnection({
-            //     {audioInputNode->nodeID, channel},
-            //     {audioOutputNode->nodeID, channel}
-            // });
             processor.graph->addConnection({
-                {audioInputNode->nodeID, channel},
+                {audioInputNode->nodeID, 1}, // Only use the guitar input from my little interface
                 {pluginNode->nodeID, channel}
             });
             processor.graph->addConnection({

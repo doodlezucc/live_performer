@@ -95,7 +95,7 @@ target_link_libraries(SharedCode
 )
 
 # Link the JUCE targets our SharedCode target
-# target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
+target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
 
 
 add_library(MixerEngineABI SHARED

@@ -6,13 +6,15 @@ TEST_CASE("list plugins", "[dummy]") {
     Engine engine;
 
     engine.audioConfig.reset(2, 2);
+    // engine.audioConfig.applyInputDevice("PipeWire Sound Server");
+    // engine.audioConfig.applyOutputDevice("PipeWire Sound Server");
 
     std::cout << "Buffer size: " << engine.audioConfig.getAudioHostOverview().currentSetup.bufferSize << std::endl;
 
     engine.audioGraph.start();
     engine.audioGraph.addTestNode();
 
-    std::cout << "Added Valhalla?" << std::endl;
+    std::cout << "Added example plugin" << std::endl;
 
     juce::Time::waitForMillisecondCounter(juce::Time::getMillisecondCounter() + 15000);
 

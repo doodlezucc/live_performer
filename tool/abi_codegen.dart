@@ -31,6 +31,7 @@ void main() {
           
           // ReSharper disable once CppUnusedIncludeDirective
           #include <stdbool.h>
+          #include <stddef.h>
           #include <stdint.h>
 
           #include "common.h"
