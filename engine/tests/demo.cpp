@@ -12,9 +12,9 @@ TEST_CASE("list audio host types", "[dummy]") {
 
     const auto overview = engine.audioConfig.getAudioHostOverview();
 
-    REQUIRE(!overview.availableTypes.isEmpty());
+    REQUIRE(!overview.availableIOTypes.isEmpty());
 
-    for (const auto &type: overview.availableTypes) {
+    for (const auto &type: overview.availableIOTypes) {
         std::cout << type.name << std::endl;
     }
 }
@@ -22,7 +22,7 @@ TEST_CASE("list audio host types", "[dummy]") {
 TEST_CASE("list audio devices ABI", "[dummy]") {
     const auto handle = mixer_engine_create();
 
-    mixer_AudioHostOverview_t *overview = nullptr;
+    mixer_AudioIOOverview_t *overview = nullptr;
     mixer_error_t *error = nullptr;
 
     const auto result = mixer_audio_config_get_overview(handle, &overview, error);
@@ -31,10 +31,10 @@ TEST_CASE("list audio devices ABI", "[dummy]") {
     REQUIRE(overview != nullptr);
     REQUIRE(error == nullptr);
 
-    REQUIRE(overview->availableTypes_count > 0);
+    REQUIRE(overview->availableIOTypes_count > 0);
 
-    for (size_t i = 0; i < overview->availableTypes_count; i++) {
-        const auto &type = overview->availableTypes[i];
+    for (size_t i = 0; i < overview->availableIOTypes_count; i++) {
+        const auto &type = overview->availableIOTypes[i];
         std::cout << type.name << std::endl;
 
         for (size_t j = 0; j < type.inputDevices_count; j++) {
@@ -46,5 +46,5 @@ TEST_CASE("list audio devices ABI", "[dummy]") {
         }
     }
 
-    mixer_free_AudioHostOverview(overview);
+    mixer_free_AudioIOOverview(overview);
 }

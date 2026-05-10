@@ -69,25 +69,38 @@ void main() {
 }
 
 final structs = <String, StructDefinition>{
-  'AudioHostType': StructDefinition({
+  'AudioIOType': StructDefinition({
     'name': .string,
     'hasSeparateInputsAndOutputs': .bool,
     'inputDevices': .string.list,
     'outputDevices': .string.list,
   }),
 
-  'AudioHostSetup': StructDefinition({
-    'inputDevice': .string,
-    'outputDevice': .string,
-    'sampleRate': .double,
-    'bufferSize': .int,
+  'AudioIOCombinationCapabilities': StructDefinition({
+    'inputChannelNames': .string.list,
+    'outputChannelNames': .string.list,
+    'defaultBufferSize': .int,
     'availableSampleRates': .double.list,
     'availableBufferSizes': .int.list,
   }),
 
-  'AudioHostOverview': StructDefinition({
-    'currentType': .string,
-    'availableTypes': .struct('AudioHostType').list,
-    'currentSetup': .struct('AudioHostSetup'),
+  'AudioIOSetup': StructDefinition({
+    'ioType': .string,
+    'inputDevice': .string,
+    'outputDevice': .string,
+    'sampleRate': .double,
+    'bufferSize': .int,
+  }),
+
+  'AudioIOSetupInfo': StructDefinition({
+    'setup': .struct('AudioIOSetup'),
+    'capabilities': .struct(
+      'AudioIOCombinationCapabilities',
+    ), // Thingy is optional, needs support for pointers
+  }),
+
+  'AudioIOOverview': StructDefinition({
+    'availableIOTypes': .struct('AudioIOType').list,
+    'currentSetup': .struct('AudioIOSetupInfo'),
   }),
 };

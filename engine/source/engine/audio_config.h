@@ -4,36 +4,48 @@
 
 class AudioConfig {
 public:
-    AudioConfig(juce::AudioDeviceManager &audioDeviceManager) : audioDeviceManager(audioDeviceManager) {
+    explicit AudioConfig(juce::AudioDeviceManager &audioDeviceManager) : audioDeviceManager(audioDeviceManager) {
     }
 
-    struct HostType {
+    struct IOType {
         juce::String name;
         bool hasSeparateInputsAndOutputs;
         juce::StringArray inputDevices;
         juce::StringArray outputDevices;
     };
 
-    struct HostSetup {
-        juce::String inputDevice;
-        juce::String outputDevice;
-        double sampleRate;
-        int bufferSize;
+    struct IOCombinationCapabilities {
+        juce::StringArray inputChannelNames;
+        juce::StringArray outputChannelNames;
+
+        int defaultBufferSize;
         juce::Array<double> availableSampleRates;
         juce::Array<int> availableBufferSizes;
     };
 
-    struct Overview {
-        juce::String currentType;
-        juce::Array<HostType> availableTypes;
-        HostSetup currentSetup;
+    struct IOSetup {
+        juce::String ioType;
+        juce::String inputDevice;
+        juce::String outputDevice;
+        double sampleRate;
+        int bufferSize;
     };
 
-    Overview getAudioHostOverview() {
-        juce::Array<HostType> availableTypes;
+    struct IOSetupInfo {
+        IOSetup setup;
+        std::optional<IOCombinationCapabilities> capabilities;
+    };
+
+    struct Overview {
+        juce::Array<IOType> availableIOTypes;
+        IOSetupInfo currentSetup;
+    };
+
+    [[nodiscard]] Overview getAudioHostOverview() const {
+        juce::Array<IOType> availableTypes;
 
         for (auto &deviceType: audioDeviceManager.getAvailableDeviceTypes()) {
-            availableTypes.add(HostType{
+            availableTypes.add(IOType{
                 .name = deviceType->getTypeName(),
                 .hasSeparateInputsAndOutputs = deviceType->hasSeparateInputsAndOutputs(),
                 .inputDevices = deviceType->getDeviceNames(true),
@@ -42,16 +54,51 @@ public:
         }
 
         return {
-            .currentType = audioDeviceManager.getCurrentAudioDeviceType(),
-            .availableTypes = availableTypes,
+            .availableIOTypes = availableTypes,
             .currentSetup = getCurrentSetup()
         };
+    }
+
+    static IOCombinationCapabilities mapAudioIODeviceToCapabilities(juce::AudioIODevice &device) {
+        return {
+            .inputChannelNames = device.getInputChannelNames(),
+            .outputChannelNames = device.getOutputChannelNames(),
+            .defaultBufferSize = device.getDefaultBufferSize(),
+            .availableSampleRates = device.getAvailableSampleRates(),
+            .availableBufferSizes = device.getAvailableBufferSizes(),
+        };
+    }
+
+    /**
+     * @throws std::runtime_error If the hostType, inputDevice or outputDevice doesn't exist.
+     * @throws std::runtime_error If AudioIODevice creation for the specified devices fails.
+     */
+    [[nodiscard]] IOCombinationCapabilities queryCapabilities(
+        const juce::String &hostType,
+        const juce::String &inputDevice,
+        const juce::String &outputDevice
+    ) const {
+        const auto &availableTypes = audioDeviceManager.getAvailableDeviceTypes();
+
+        for (auto &type: availableTypes) {
+            if (type->getTypeName() == hostType) {
+                const auto combination = type->createDevice(inputDevice, outputDevice);
+
+                // Success, device was created! :)
+                return mapAudioIODeviceToCapabilities(*combination);
+            }
+        }
+
+        throw std::runtime_error("Host type does not exist");
     }
 
     /**
      * @throws std::runtime_error If the default initialization fails.
      */
-    HostSetup reset(const int numInputChannelsNeeded, const int numOutputChannelsNeeded) {
+    void reset(
+        const int numInputChannelsNeeded,
+        const int numOutputChannelsNeeded
+    ) const {
         const auto error = audioDeviceManager.initialiseWithDefaultDevices(
             numInputChannelsNeeded,
             numOutputChannelsNeeded
@@ -60,83 +107,64 @@ public:
         if (error.isNotEmpty()) {
             throw std::runtime_error(error.toStdString());
         }
-
-        return getCurrentSetup();
-    }
-
-    HostSetup switchAudioHostTo(const juce::String &name) {
-        audioDeviceManager.setCurrentAudioDeviceType(name, false);
-
-        const auto audioHost = audioDeviceManager.getCurrentDeviceTypeObject();
-        audioHost->scanForDevices();
-
-        return getCurrentSetup();
     }
 
     /**
      * @throws std::runtime_error If the setup can't be applied.
      */
-    HostSetup applyInputDevice(const juce::String &name) {
-        applySetupChanges([&](auto &setup) {
-            setup.inputDeviceName = name;
-        });
-        return getCurrentSetup();
+    void applySetup(const IOSetup &setup) const {
+        const auto originalSetup = audioDeviceManager.getAudioDeviceSetup();
+        const auto originalState = audioDeviceManager.createStateXml();
+
+        try {
+            audioDeviceManager.setCurrentAudioDeviceType(setup.ioType, false);
+
+            auto deviceSetup = audioDeviceManager.getAudioDeviceSetup();
+            deviceSetup.inputDeviceName = setup.inputDevice;
+            deviceSetup.outputDeviceName = setup.outputDevice;
+            deviceSetup.bufferSize = setup.bufferSize;
+            deviceSetup.sampleRate = setup.sampleRate;
+
+            // Maybe this should be switched out for an explicit "enable all channels" thing.
+            deviceSetup.useDefaultInputChannels = true;
+            deviceSetup.useDefaultOutputChannels = true;
+
+            auto const error = audioDeviceManager.setAudioDeviceSetup(deviceSetup, false);
+
+            if (error.isNotEmpty()) {
+                throw std::runtime_error(error.toStdString());
+            }
+        } catch (...) {
+            audioDeviceManager.initialise(
+                originalSetup.inputChannels.countNumberOfSetBits(),
+                originalSetup.outputChannels.countNumberOfSetBits(),
+                originalState.get(),
+                false
+            );
+            throw;
+        }
     }
 
-    /**
-     * @throws std::runtime_error If the setup can't be applied.
-     */
-    HostSetup applyOutputDevice(const juce::String &name) {
-        applySetupChanges([&](auto &setup) {
-            setup.outputDeviceName = name;
-        });
-        return getCurrentSetup();
-    }
+    [[nodiscard]] IOSetupInfo getCurrentSetup() const {
+        const auto selectedDevice = audioDeviceManager.getCurrentAudioDevice();
+        const auto setup = audioDeviceManager.getAudioDeviceSetup();
 
-
-    /**
-     * @throws std::runtime_error If the setup can't be applied.
-     */
-    HostSetup applyQualityConfiguration(const double sampleRate, const int bufferSize) {
-        applySetupChanges([&](auto &setup) {
-            setup.sampleRate = sampleRate;
-            setup.bufferSize = bufferSize;
-        });
-        return getCurrentSetup();
+        return {
+            .setup = {
+                .ioType = audioDeviceManager.getCurrentAudioDeviceType(),
+                .inputDevice = setup.inputDeviceName,
+                .outputDevice = setup.outputDeviceName,
+                .sampleRate = setup.sampleRate,
+                .bufferSize = setup.bufferSize,
+            },
+            .capabilities = selectedDevice != nullptr
+                                ? std::optional(mapAudioIODeviceToCapabilities(*selectedDevice))
+                                : std::nullopt
+        };
     }
 
 private:
     juce::AudioDeviceManager &audioDeviceManager;
 
-    HostSetup getCurrentSetup() {
-        const auto selectedDevice = audioDeviceManager.getCurrentAudioDevice();
-        const auto setup = audioDeviceManager.getAudioDeviceSetup();
-
-        HostSetup result = {
-            .inputDevice = setup.inputDeviceName,
-            .outputDevice = setup.outputDeviceName,
-            .sampleRate = setup.sampleRate,
-            .bufferSize = setup.bufferSize,
-        };
-
-        if (selectedDevice != nullptr) {
-            result.availableSampleRates = selectedDevice->getAvailableSampleRates();
-            result.availableBufferSizes = selectedDevice->getAvailableBufferSizes();
-        }
-
-        return result;
-    }
-
-    void applySetupChanges(const std::function<void(juce::AudioDeviceManager::AudioDeviceSetup &)> &apply) {
-        auto setup = audioDeviceManager.getAudioDeviceSetup();
-        apply(setup);
-
-        auto const error = audioDeviceManager.setAudioDeviceSetup(setup, false);
-
-        if (error.isNotEmpty()) {
-            throw std::runtime_error(error.toStdString());
-        }
-    }
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioConfig);
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioConfig)
 };

@@ -43,7 +43,7 @@ inline char **copyStringArray(const juce::StringArray &source) {
     auto *destination = new char *[count];
 
     for (size_t i = 0; i < count; i++) {
-        destination[i] = copyString(source.getReference(i));
+        destination[i] = copyString(source.getReference(static_cast<int>(i)));
     }
 
     return destination;

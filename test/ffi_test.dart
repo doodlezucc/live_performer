@@ -19,9 +19,11 @@ void main() {
       numOutputChannelsNeeded: 2,
     );
 
+    print(defaultSetup);
+
     final overview = engine.audioConfig.getOverview();
 
-    print(overview.availableTypes.map((type) => type.name).join(', '));
+    print(overview.availableIOTypes.map((type) => type.name).join(', '));
 
     mixer_engine_destroy(handle);
 

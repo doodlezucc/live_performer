@@ -34,34 +34,48 @@ void mixer_engine_destroy(engine_handle_t *handle) {
     delete handle;
 }
 
-mixer_AudioHostSetup_t map_audio_host_setup(const AudioConfig::HostSetup &source) {
+
+mixer_AudioIOCombinationCapabilities_t map_audio_io_combination_capabilities(
+    const AudioConfig::IOCombinationCapabilities &source) {
     return {
-        .inputDevice = copyString(source.inputDevice),
-        .outputDevice = copyString(source.outputDevice),
-        .sampleRate = source.sampleRate,
-        .bufferSize = source.bufferSize,
+        .inputChannelNames_count = static_cast<size_t>(source.inputChannelNames.size()),
+        .inputChannelNames = copyStringArray(source.inputChannelNames),
+        .outputChannelNames_count = static_cast<size_t>(source.outputChannelNames.size()),
+        .outputChannelNames = copyStringArray(source.outputChannelNames),
+        .defaultBufferSize = source.defaultBufferSize,
         .availableSampleRates_count = static_cast<size_t>(source.availableSampleRates.size()),
         .availableSampleRates = copyArray(source.availableSampleRates),
         .availableBufferSizes_count = static_cast<size_t>(source.availableBufferSizes.size()),
-        .availableBufferSizes = copyArrayAs<int32_t>(source.availableBufferSizes)
+        .availableBufferSizes = copyArray(source.availableBufferSizes)
+    };
+}
+
+mixer_AudioIOSetupInfo_t map_audio_io_setup_info(const AudioConfig::IOSetupInfo &source) {
+    return {
+        .setup = {
+            .ioType = copyString(source.setup.ioType),
+            .inputDevice = copyString(source.setup.inputDevice),
+            .outputDevice = copyString(source.setup.outputDevice),
+            .sampleRate = source.setup.sampleRate,
+            .bufferSize = source.setup.bufferSize
+        },
+        .capabilities = source.capabilities.has_value()
+                            ? map_audio_io_combination_capabilities(source.capabilities.value())
+                            : mixer_AudioIOCombinationCapabilities_t{} // Turn this into a pointer = optional field
     };
 }
 
 mixer_call_result_t mixer_audio_config_get_overview(
     engine_handle_t *handle,
-    mixer_AudioHostOverview_t **out,
+    mixer_AudioIOOverview_t **out,
     mixer_error_t *outError
 ) {
     if (handle == nullptr) return asErrorInvalidHandle(outError);
 
     ABI_TRY
-        const auto [
-            currentType,
-            availableTypes,
-            currentSetup
-        ] = handle->engine.audioConfig.getAudioHostOverview();
+        const auto [availableTypes, currentSetup] = handle->engine.audioConfig.getAudioHostOverview();
 
-        const auto availableTypesNative = new mixer_AudioHostType_t[availableTypes.size()];
+        const auto availableTypesNative = new mixer_AudioIOType_t[availableTypes.size()];
         for (int i = 0; i < availableTypes.size(); i++) {
             const auto [
                 name,
@@ -80,12 +94,29 @@ mixer_call_result_t mixer_audio_config_get_overview(
             };
         }
 
-        *out = new mixer_AudioHostOverview_t{
-            .currentType = copyString(currentType),
-            .availableTypes_count = static_cast<size_t>(availableTypes.size()),
-            .availableTypes = availableTypesNative,
-            .currentSetup = map_audio_host_setup(currentSetup)
+        *out = new mixer_AudioIOOverview_t{
+            .availableIOTypes_count = static_cast<size_t>(availableTypes.size()),
+            .availableIOTypes = availableTypesNative,
+            .currentSetup = map_audio_io_setup_info(currentSetup)
         };
+
+        return MIXER_OK;
+    ABI_CATCH
+}
+
+mixer_call_result_t mixer_audio_config_query_capabilities(
+    engine_handle_t *handle,
+    const char *hostType,
+    const char *inputDevice,
+    const char *outputDevice,
+    mixer_AudioIOCombinationCapabilities_t **out,
+    mixer_error_t *outError
+) {
+    if (handle == nullptr) return asErrorInvalidHandle(outError);
+
+    ABI_TRY
+        const auto capabilities = handle->engine.audioConfig.queryCapabilities(hostType, inputDevice, outputDevice);
+        *out = new mixer_AudioIOCombinationCapabilities_t(map_audio_io_combination_capabilities(capabilities));
 
         return MIXER_OK;
     ABI_CATCH
@@ -95,80 +126,49 @@ mixer_call_result_t mixer_audio_config_reset(
     engine_handle_t *handle,
     const int32_t numInputChannelsNeeded,
     const int32_t numOutputChannelsNeeded,
-    mixer_AudioHostSetup_t **outSetup,
+    mixer_AudioIOSetupInfo_t **outSetupInfo,
     mixer_error_t *outError
 ) {
     if (handle == nullptr) return asErrorInvalidHandle(outError);
 
     ABI_TRY
-        const auto setup = handle->engine.audioConfig.reset(numInputChannelsNeeded, numOutputChannelsNeeded);
-        *outSetup = new mixer_AudioHostSetup_t(map_audio_host_setup(setup));
+        handle->engine.audioConfig.reset(numInputChannelsNeeded, numOutputChannelsNeeded);
+
+        const auto newSetup = handle->engine.audioConfig.getCurrentSetup();
+        *outSetupInfo = new mixer_AudioIOSetupInfo_t(map_audio_io_setup_info(newSetup));
 
         return MIXER_OK;
     ABI_CATCH
 }
 
-mixer_call_result_t mixer_audio_config_switch_host_to(
+mixer_call_result_t mixer_audio_config_apply(
     engine_handle_t *handle,
-    char *name,
-    mixer_AudioHostSetup_t **outSetup,
+    mixer_AudioIOSetup_t *setup,
+    mixer_AudioIOSetupInfo_t **outSetupInfo,
     mixer_error_t *outError
 ) {
     if (handle == nullptr) return asErrorInvalidHandle(outError);
 
     ABI_TRY
-        const auto setup = handle->engine.audioConfig.switchAudioHostTo(juce::String(name));
-        *outSetup = new mixer_AudioHostSetup_t(map_audio_host_setup(setup));
+        try {
+            handle->engine.audioConfig.applySetup({
+                .ioType = setup->ioType,
+                .inputDevice = setup->inputDevice,
+                .outputDevice = setup->outputDevice,
+                .sampleRate = setup->sampleRate,
+                .bufferSize = setup->bufferSize
+            });
 
-        return MIXER_OK;
-    ABI_CATCH
-}
+            const auto newSetup = handle->engine.audioConfig.getCurrentSetup();
+            *outSetupInfo = new mixer_AudioIOSetupInfo_t(map_audio_io_setup_info(newSetup));
 
-mixer_call_result_t mixer_audio_config_apply_input_device(
-    engine_handle_t *handle,
-    char *name,
-    mixer_AudioHostSetup_t **outSetup,
-    mixer_error_t *outError
-) {
-    if (handle == nullptr) return asErrorInvalidHandle(outError);
+            return MIXER_OK;
+        } catch (...) {
+            // ReSharper disable once CppDFANullDereference
+            const auto newSetup = handle->engine.audioConfig.getCurrentSetup();
+            *outSetupInfo = new mixer_AudioIOSetupInfo_t(map_audio_io_setup_info(newSetup));
 
-    ABI_TRY
-        const auto setup = handle->engine.audioConfig.applyInputDevice(juce::String(name));
-        *outSetup = new mixer_AudioHostSetup_t(map_audio_host_setup(setup));
-
-        return MIXER_OK;
-    ABI_CATCH
-}
-
-mixer_call_result_t mixer_audio_config_apply_output_device(
-    engine_handle_t *handle,
-    char *name,
-    mixer_AudioHostSetup_t **outSetup,
-    mixer_error_t *outError
-) {
-    if (handle == nullptr) return asErrorInvalidHandle(outError);
-
-    ABI_TRY
-        const auto setup = handle->engine.audioConfig.applyOutputDevice(juce::String(name));
-        *outSetup = new mixer_AudioHostSetup_t(map_audio_host_setup(setup));
-
-        return MIXER_OK;
-    ABI_CATCH
-}
-
-mixer_call_result_t mixer_audio_config_apply_quality_configuration(
-    engine_handle_t *handle,
-    const double sampleRate,
-    const int bufferSize,
-    mixer_AudioHostSetup_t **outSetup,
-    mixer_error_t *outError
-) {
-    if (handle == nullptr) return asErrorInvalidHandle(outError);
-
-    ABI_TRY
-        const auto setup = handle->engine.audioConfig.applyQualityConfiguration(sampleRate, bufferSize);
-        *outSetup = new mixer_AudioHostSetup_t(map_audio_host_setup(setup));
-
-        return MIXER_OK;
+            throw;
+        }
     ABI_CATCH
 }

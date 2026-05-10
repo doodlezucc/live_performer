@@ -32,7 +32,16 @@ MIXER_ABI_EXPORT void mixer_engine_destroy(engine_handle_t *handle);
 
 MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_get_overview(
     engine_handle_t *handle,
-    mixer_AudioHostOverview_t **out,
+    mixer_AudioIOOverview_t **out,
+    mixer_error_t *outError
+);
+
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_query_capabilities(
+    engine_handle_t *handle,
+    const char *hostType,
+    const char *inputDevice,
+    const char *outputDevice,
+    mixer_AudioIOCombinationCapabilities_t **out,
     mixer_error_t *outError
 );
 
@@ -40,36 +49,14 @@ MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_reset(
     engine_handle_t *handle,
     int32_t numInputChannelsNeeded,
     int32_t numOutputChannelsNeeded,
-    mixer_AudioHostSetup_t **outSetup,
+    mixer_AudioIOSetupInfo_t **outSetupInfo,
     mixer_error_t *outError
 );
 
-MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_switch_host_to(
+MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply(
     engine_handle_t *handle,
-    char *name,
-    mixer_AudioHostSetup_t **outSetup,
-    mixer_error_t *outError
-);
-
-MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_input_device(
-    engine_handle_t *handle,
-    char *name,
-    mixer_AudioHostSetup_t **outSetup,
-    mixer_error_t *outError
-);
-
-MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_output_device(
-    engine_handle_t *handle,
-    char *name,
-    mixer_AudioHostSetup_t **outSetup,
-    mixer_error_t *outError
-);
-
-MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply_quality_configuration(
-    engine_handle_t *handle,
-    double sampleRate,
-    int bufferSize,
-    mixer_AudioHostSetup_t **outSetup,
+    mixer_AudioIOSetup_t *setup,
+    mixer_AudioIOSetupInfo_t **outSetupInfo,
     mixer_error_t *outError
 );
 

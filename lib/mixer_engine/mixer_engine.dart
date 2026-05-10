@@ -45,24 +45,24 @@ class AudioConfig {
 
   AudioConfig._(this._engine);
 
-  AudioHostSetup reset({
+  AudioIOSetupInfo reset({
     required int numInputChannelsNeeded,
     required numOutputChannelsNeeded,
   }) {
     return using((arena) {
-      final outSetup = arena<Pointer<mixer_AudioHostSetup_t>>();
+      final outSetupInfo = arena<Pointer<mixer_AudioIOSetupInfo_t>>();
 
       _engine._runGuarded(
         (handle, outError) => mixer_audio_config_reset(
           handle,
           numInputChannelsNeeded,
           numOutputChannelsNeeded,
-          outSetup,
+          outSetupInfo,
           outError,
         ),
       );
 
-      final setup = outSetup.value;
+      final setup = outSetupInfo.value;
 
       if (setup == nullptr) {
         throw StateError('Out parameter returned nullptr');
@@ -76,9 +76,9 @@ class AudioConfig {
     });
   }
 
-  AudioHostOverview getOverview() {
+  AudioIOOverview getOverview() {
     return using((arena) {
-      final outOverview = arena<Pointer<mixer_AudioHostOverview_t>>();
+      final outOverview = arena<Pointer<mixer_AudioIOOverview_t>>();
 
       _engine._runGuarded(
         (handle, outError) =>
