@@ -14,6 +14,10 @@ sealed class FieldTypeInfo<T extends FieldType> {
         FieldTypeInfo.of(elementType, options: options) as ListableTypeInfo,
       ),
 
+      NullableStructType() => NullableStructTypeInfo(
+        structType: type,
+        options: options,
+      ),
       StructType() => StructTypeInfo(structType: type, options: options),
 
       _ => throw ArgumentError(
@@ -152,7 +156,7 @@ final class ListTypeInfo extends FieldTypeInfo<ListType> {
   };
 }
 
-final class StructTypeInfo extends FieldTypeInfo<StructType>
+final class StructTypeInfo<T extends StructType> extends FieldTypeInfo<T>
     with ListableTypeInfo {
   final StructType structType;
   final InputOptions options;
@@ -183,6 +187,38 @@ final class StructTypeInfo extends FieldTypeInfo<StructType>
       structType.name,
     );
 
+    return ['$freeFunctionName($variable)'];
+  }
+}
+
+final class NullableStructTypeInfo extends StructTypeInfo<NullableStructType> {
+  const NullableStructTypeInfo({
+    required super.structType,
+    required super.options,
+  });
+
+  @override
+  String get dartName => '${structType.name}?';
+
+  @override
+  String dartConvertFieldToNative(String dartField) =>
+      '$dartField?.toNative(arena)';
+
+  @override
+  String dartConvertFieldFromNative(String nativeField) =>
+      '$nativeField == nullptr ? null : $nativeField.ref.toDart()';
+
+  @override
+  List<String> dartAssignFieldToNative(String nativeVar, String dartVar) => [
+    '$nativeVar = $dartVar?.toNative(arena) ?? nullptr',
+  ];
+
+  @override
+  String get cName => '${super.cName}*';
+
+  @override
+  List<String> cCallFreeFunction(String variable) {
+    final freeFunctionName = options.renameStructFreeFunction(structType.name);
     return ['$freeFunctionName($variable)'];
   }
 }

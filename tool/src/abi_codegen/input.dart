@@ -96,4 +96,10 @@ class StructType extends FieldType with ListableType {
   final String name;
 
   const StructType(this.name);
+
+  NullableStructType get nullable => NullableStructType(name);
+}
+
+class NullableStructType extends StructType {
+  const NullableStructType(super.name);
 }

@@ -60,8 +60,10 @@ mixer_AudioIOSetupInfo_t map_audio_io_setup_info(const AudioConfig::IOSetupInfo 
             .bufferSize = source.setup.bufferSize
         },
         .capabilities = source.capabilities.has_value()
-                            ? map_audio_io_combination_capabilities(source.capabilities.value())
-                            : mixer_AudioIOCombinationCapabilities_t{} // Turn this into a pointer = optional field
+                            ? new mixer_AudioIOCombinationCapabilities_t(
+                                map_audio_io_combination_capabilities(source.capabilities.value())
+                            )
+                            : nullptr
     };
 }
 

@@ -94,9 +94,7 @@ final structs = <String, StructDefinition>{
 
   'AudioIOSetupInfo': StructDefinition({
     'setup': .struct('AudioIOSetup'),
-    'capabilities': .struct(
-      'AudioIOCombinationCapabilities',
-    ), // Thingy is optional, needs support for pointers
+    'capabilities': .struct('AudioIOCombinationCapabilities').nullable,
   }),
 
   'AudioIOOverview': StructDefinition({
