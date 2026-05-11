@@ -48,3 +48,36 @@ TEST_CASE("list audio devices ABI", "[dummy]") {
 
     mixer_free_AudioIOOverview(overview);
 }
+
+TEST_CASE("query capabilities", "[dummy]") {
+    const auto handle = mixer_engine_create();
+
+    mixer_AudioIOOverview_t *overview = nullptr;
+    mixer_error_t *error = nullptr;
+
+    mixer_audio_config_get_overview(handle, &overview, error);
+
+    mixer_AudioIOCombinationCapabilities_t *capabilities = nullptr;
+    const auto result = mixer_audio_config_query_capabilities(
+        handle,
+        overview->availableIOTypes[0].name,
+        overview->availableIOTypes[0].inputDevices[0],
+        overview->availableIOTypes[0].outputDevices[0],
+        &capabilities,
+        error
+    );
+    mixer_free_AudioIOOverview(overview);
+
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(capabilities != nullptr);
+    REQUIRE(error == nullptr);
+
+    REQUIRE(capabilities->defaultBufferSize > 0);
+
+    for (size_t i = 0; i < capabilities->availableBufferSizes_count; i++) {
+        const auto &bufferSize = capabilities->availableBufferSizes[i];
+        std::cout << bufferSize << std::endl;
+    }
+
+    mixer_free_AudioIOCombinationCapabilities(capabilities);
+}

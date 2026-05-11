@@ -23,7 +23,21 @@ void main() {
 
     final overview = engine.audioConfig.getOverview();
 
-    print(overview.availableIOTypes.map((type) => type.name).join(', '));
+    for (final ioType in overview.availableIOTypes) {
+      print(ioType.name);
+      print('\t${ioType.inputDevices}');
+      print('\t${ioType.outputDevices}');
+    }
+
+    final ioType = overview.availableIOTypes[0];
+
+    print(
+      engine.audioConfig.queryCapabilities(
+        hostName: ioType.name,
+        inputDevice: ioType.inputDevices[0],
+        outputDevice: ioType.outputDevices[0],
+      ),
+    );
 
     mixer_engine_destroy(handle);
 

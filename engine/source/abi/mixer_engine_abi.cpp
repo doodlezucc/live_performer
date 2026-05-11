@@ -117,7 +117,11 @@ mixer_call_result_t mixer_audio_config_query_capabilities(
     if (handle == nullptr) return asErrorInvalidHandle(outError);
 
     ABI_TRY
-        const auto capabilities = handle->engine.audioConfig.queryCapabilities(hostType, inputDevice, outputDevice);
+        const auto capabilities = handle->engine.audioConfig.queryCapabilities(
+            juce::CharPointer_UTF8(hostType),
+            juce::CharPointer_UTF8(inputDevice),
+            juce::CharPointer_UTF8(outputDevice)
+        );
         *out = new mixer_AudioIOCombinationCapabilities_t(map_audio_io_combination_capabilities(capabilities));
 
         return MIXER_OK;

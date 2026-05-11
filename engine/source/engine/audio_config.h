@@ -82,7 +82,11 @@ public:
 
         for (auto &type: availableTypes) {
             if (type->getTypeName() == hostType) {
-                const auto combination = type->createDevice(inputDevice, outputDevice);
+                const auto combination = type->createDevice(outputDevice, inputDevice);
+
+                if (combination == nullptr) {
+                    throw std::runtime_error("Failed to create device combination");
+                }
 
                 // Success, device was created! :)
                 return mapAudioIODeviceToCapabilities(*combination);

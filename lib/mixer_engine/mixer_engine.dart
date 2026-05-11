@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
+import 'converter_extensions.dart';
 import 'mixer_engine.g.dart';
 import 'mixer_engine_structs.g.dart';
 
@@ -28,7 +29,7 @@ class MixerEngine {
         final errorCharPointer = outError.value;
 
         if (errorCharPointer != nullptr) {
-          final errorMessage = errorCharPointer.cast<Utf8>().toDartString();
+          final errorMessage = errorCharPointer.toDart();
           mixer_error_free(outError);
 
           throw errorMessage;
@@ -86,13 +87,44 @@ class AudioConfig {
       );
 
       if (outOverview.value == nullptr) {
-        throw StateError('message');
+        throw StateError('Out parameter returned nullptr');
       }
 
       try {
         return outOverview.value.ref.toDart();
       } finally {
         outOverview.value.free();
+      }
+    });
+  }
+
+  AudioIOCombinationCapabilities queryCapabilities({
+    required String hostName,
+    required String inputDevice,
+    required String outputDevice,
+  }) {
+    return using((arena) {
+      final out = arena<Pointer<mixer_AudioIOCombinationCapabilities_t>>();
+
+      _engine._runGuarded(
+        (handle, outError) => mixer_audio_config_query_capabilities(
+          handle,
+          hostName.toUtf8(arena),
+          inputDevice.toUtf8(arena),
+          outputDevice.toUtf8(arena),
+          out,
+          outError,
+        ),
+      );
+
+      if (out.value == nullptr) {
+        throw StateError('Out parameter returned nullptr');
+      }
+
+      try {
+        return out.value.ref.toDart();
+      } finally {
+        out.value.free();
       }
     });
   }

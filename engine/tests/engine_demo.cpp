@@ -9,8 +9,6 @@ TEST_CASE("list plugins", "[dummy]") {
     // engine.audioConfig.applyInputDevice("PipeWire Sound Server");
     // engine.audioConfig.applyOutputDevice("PipeWire Sound Server");
 
-    std::cout << "Buffer size: " << engine.audioConfig.getAudioHostOverview().currentSetup.bufferSize << std::endl;
-
     engine.audioGraph.start();
     engine.audioGraph.addTestNode();
 
