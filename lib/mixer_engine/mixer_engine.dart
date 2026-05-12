@@ -37,7 +37,28 @@ class MixerEngine {
           throw "Unknown error with result $result";
         }
       }
-    });
+    }, calloc);
+  }
+
+  Pointer<T> _runGuardedWithResult<T extends Struct>(
+    int Function(
+      Pointer<engine_handle_t> handle,
+      Pointer<Pointer<T>> outResult,
+      Pointer<mixer_error_t> outError,
+    )
+    call,
+  ) {
+    return using((arena) {
+      final outResult = arena<Pointer>().cast<Pointer<T>>();
+
+      _runGuarded((handle, outError) => call(handle, outResult, outError));
+
+      if (outResult.value == nullptr) {
+        throw StateError('Out parameter returned nullptr');
+      }
+
+      return outResult.value;
+    }, calloc);
   }
 }
 
@@ -50,52 +71,25 @@ class AudioConfig {
     required int numInputChannelsNeeded,
     required numOutputChannelsNeeded,
   }) {
-    return using((arena) {
-      final outSetupInfo = arena<Pointer<mixer_AudioIOSetupInfo_t>>();
-
-      _engine._runGuarded(
-        (handle, outError) => mixer_audio_config_reset(
-          handle,
-          numInputChannelsNeeded,
-          numOutputChannelsNeeded,
-          outSetupInfo,
-          outError,
-        ),
-      );
-
-      final setup = outSetupInfo.value;
-
-      if (setup == nullptr) {
-        throw StateError('Out parameter returned nullptr');
-      }
-
-      try {
-        return setup.ref.toDart();
-      } finally {
-        setup.free();
-      }
-    });
+    return _engine
+        ._runGuardedWithResult<mixer_AudioIOSetupInfo_t>(
+          (handle, outResult, outError) => mixer_audio_config_reset(
+            handle,
+            numInputChannelsNeeded,
+            numOutputChannelsNeeded,
+            outResult,
+            outError,
+          ),
+        )
+        .freeToDart();
   }
 
   AudioIOOverview getOverview() {
-    return using((arena) {
-      final outOverview = arena<Pointer<mixer_AudioIOOverview_t>>();
-
-      _engine._runGuarded(
-        (handle, outError) =>
-            mixer_audio_config_get_overview(handle, outOverview, outError),
-      );
-
-      if (outOverview.value == nullptr) {
-        throw StateError('Out parameter returned nullptr');
-      }
-
-      try {
-        return outOverview.value.ref.toDart();
-      } finally {
-        outOverview.value.free();
-      }
-    });
+    return _engine
+        ._runGuardedWithResult<mixer_AudioIOOverview_t>(
+          mixer_audio_config_get_overview,
+        )
+        .freeToDart();
   }
 
   AudioIOCombinationCapabilities queryCapabilities({
@@ -103,29 +97,20 @@ class AudioConfig {
     required String inputDevice,
     required String outputDevice,
   }) {
-    return using((arena) {
-      final out = arena<Pointer<mixer_AudioIOCombinationCapabilities_t>>();
-
-      _engine._runGuarded(
-        (handle, outError) => mixer_audio_config_query_capabilities(
-          handle,
-          hostName.toUtf8(arena),
-          inputDevice.toUtf8(arena),
-          outputDevice.toUtf8(arena),
-          out,
-          outError,
-        ),
-      );
-
-      if (out.value == nullptr) {
-        throw StateError('Out parameter returned nullptr');
-      }
-
-      try {
-        return out.value.ref.toDart();
-      } finally {
-        out.value.free();
-      }
-    });
+    return using(
+      (arena) => _engine
+          ._runGuardedWithResult<mixer_AudioIOCombinationCapabilities_t>(
+            (handle, outResult, outError) =>
+                mixer_audio_config_query_capabilities(
+                  handle,
+                  hostName.toUtf8(arena),
+                  inputDevice.toUtf8(arena),
+                  outputDevice.toUtf8(arena),
+                  outResult,
+                  outError,
+                ),
+          )
+          .freeToDart(),
+    );
   }
 }

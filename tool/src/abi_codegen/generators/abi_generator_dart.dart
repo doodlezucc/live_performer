@@ -131,6 +131,10 @@ class AbiGeneratorDart extends AbiGenerator {
     return trimIndent('''
       extension ${structName}_free on Pointer<$nativeName> {
         void free() => $nativeFreeFunctionName(this);
+
+        $structName freeToDart() {
+          try { return ref.toDart(); } finally { free(); }
+        }
       }
     ''');
   }
