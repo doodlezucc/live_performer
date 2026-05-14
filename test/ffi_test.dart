@@ -7,7 +7,7 @@ void main() {
   setUp(() => mixer_initialize());
   tearDown(() => mixer_shutdown());
 
-  test('Run FFI thingy', () {
+  test('Run FFI thingy', () async {
     late final MixerEngine engine;
 
     setUp(() => engine = MixerEngine.create());
@@ -15,7 +15,7 @@ void main() {
 
     final audioIORepository = AudioIORepository(engine: engine);
 
-    audioIORepository.reset(
+    await audioIORepository.reset(
       numInputChannelsNeeded: 2,
       numOutputChannelsNeeded: 2,
     );
@@ -23,7 +23,7 @@ void main() {
     final defaultSetup = audioIORepository.getSetupInfo();
     print(defaultSetup);
 
-    final overview = audioIORepository.getOverview();
+    final overview = await audioIORepository.getOverview();
 
     for (final ioType in overview.availableIOTypes) {
       print(ioType.name);
@@ -34,7 +34,7 @@ void main() {
     final ioType = overview.availableIOTypes[0];
 
     print(
-      audioIORepository.queryCapabilities(
+      await audioIORepository.queryCapabilities(
         ioType: ioType.name,
         inputDevice: ioType.inputDevices[0],
         outputDevice: ioType.outputDevices[0],

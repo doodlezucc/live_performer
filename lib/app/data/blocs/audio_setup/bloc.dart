@@ -1,11 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
-import 'package:live_performer/util/bloc_error_stream.dart';
 
 import 'state.dart';
 
-class AudioSetupBloc extends Cubit<AudioSetupState> with BlocErrorStream {
+class AudioSetupBloc extends Cubit<AudioSetupState> {
   final AudioIORepository _repository;
 
   AudioSetupBloc({required AudioIORepository repository})
@@ -19,9 +18,10 @@ class AudioSetupBloc extends Cubit<AudioSetupState> with BlocErrorStream {
   void resetToDefault({
     required int numInputChannelsNeeded,
     required int numOutputChannelsNeeded,
-  }) {
+  }) async {
     try {
-      _repository.reset(
+      emit(AudioSetupLoadInProgress());
+      await _repository.reset(
         numInputChannelsNeeded: numInputChannelsNeeded,
         numOutputChannelsNeeded: numOutputChannelsNeeded,
       );
@@ -30,9 +30,10 @@ class AudioSetupBloc extends Cubit<AudioSetupState> with BlocErrorStream {
     }
   }
 
-  void applySetup(AudioIOSetup setup) {
+  void applySetup(AudioIOSetup setup) async {
     try {
-      _repository.applySetup(setup: setup);
+      emit(AudioSetupLoadInProgress());
+      await _repository.applySetup(setup: setup);
     } finally {
       _refreshCurrentSetupInfo();
     }

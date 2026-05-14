@@ -1,47 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:live_performer/app/app_state.dart';
+import 'package:live_performer/app/data/blocs/audio_overview/bloc.dart';
+import 'package:live_performer/app/data/blocs/audio_overview/state.dart';
 import 'package:live_performer/app/data/blocs/audio_setup/bloc.dart';
 import 'package:live_performer/app/data/blocs/audio_setup/state.dart';
 import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
 import 'package:live_performer/app/ui/core/dropdown/dropdown.dart';
 import 'package:live_performer/app/ui/core/dropdown/option.dart';
 import 'package:live_performer/app/ui/core/dropdown/optional_dropdown.dart';
-import 'package:live_performer/app/ui/pages/main_page/settings_dialog/device_config.dart';
+import 'package:live_performer/app/ui/pages/main_page/settings_dialog/single_device_config.dart';
 import 'package:live_performer/mixer_engine/mixer_engine_structs.g.dart';
 
-class AudioSetupView extends StatefulWidget {
+class AudioSetupView extends StatelessWidget {
   const AudioSetupView({super.key});
-
-  @override
-  State<AudioSetupView> createState() => _AudioSetupViewState();
-}
-
-class _AudioSetupViewState extends State<AudioSetupView> {
-  late AudioIOOverview _latestOverview;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _latestOverview = getIt<AudioIORepository>().getOverview();
-  }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AudioSetupBloc, AudioSetupState>(
       bloc: getIt(),
       builder: (context, state) => switch (state) {
-        AudioSetupInitial() => Text('Loading audio setup...'),
-
         AudioSetupLoadFailure(error: final error) => Text(
           'Failed to load active audio setup.\n$error',
         ),
 
-        AudioSetupLoadSuccess() => LoadedAudioSetupView(
-          overview: _latestOverview,
-          effective: state.setupInfo,
-        ),
+        AudioSetupLoadSuccess(setupInfo: final setupInfo) =>
+          BlocBuilder<AudioOverviewBloc, AudioOverviewState>(
+            bloc: getIt(),
+            builder: (context, state) => switch (state) {
+              AudioOverviewLoadFailure(error: final error) => Text(
+                'Failed to scan devices.\n$error',
+              ),
+
+              AudioOverviewLoadSuccess(overview: final overview) =>
+                LoadedAudioSetupView(overview: overview, effective: setupInfo),
+
+              _ => Text('Scanning devices...'),
+            },
+          ),
+
+        _ => Text('Loading audio setup...'),
       },
     );
   }
@@ -65,7 +63,9 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
   AudioIOSetup get effectiveSetup => widget.effective.setup;
 
   late String _selectedIOTypeName = effectiveSetup.ioType;
-  late String? _selectedInputDevice = effectiveSetup.inputDevice;
+  late String? _selectedInputDevice = effectiveSetup.inputDevice.isEmpty
+      ? null
+      : effectiveSetup.inputDevice;
   late String _selectedOutputDevice = effectiveSetup.outputDevice;
   late int _selectedBufferSize = effectiveSetup.bufferSize;
   late double _selectedSampleRate = effectiveSetup.sampleRate;
@@ -80,6 +80,8 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
 
   late AudioIOCombinationCapabilities? _selectedCapabilities =
       widget.effective.capabilities;
+
+  bool _isLoadingCapabilities = false;
 
   bool get isDifferentFromEffectiveSetup => effectiveSetup != selectedSetup;
 
@@ -98,6 +100,7 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
           Dropdown<String>(
             label: 'Audio IO Type',
             value: _selectedIOTypeName,
+            expand: true,
 
             options: widget.overview.availableIOTypes.map((type) {
               return DropdownOption(value: type.name, label: type.name);
@@ -122,7 +125,7 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Flexible(
-                child: DeviceConfig(
+                child: SingleDeviceConfig(
                   deviceDropdown: OptionalDropdown<String>(
                     expand: true,
                     label: 'Input Device',
@@ -140,11 +143,12 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
                       _reloadCapabilities();
                     },
                   ),
-                  channelNames: _selectedCapabilities?.inputChannelNames,
+                  channelNames: _selectedCapabilities?.inputChannelNames ?? [],
+                  isLoadingCapabilities: _isLoadingCapabilities,
                 ),
               ),
               Flexible(
-                child: DeviceConfig(
+                child: SingleDeviceConfig(
                   deviceDropdown: Dropdown<String>(
                     expand: true,
                     label: 'Output Device',
@@ -162,7 +166,8 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
                       _reloadCapabilities();
                     },
                   ),
-                  channelNames: _selectedCapabilities?.outputChannelNames,
+                  channelNames: _selectedCapabilities?.outputChannelNames ?? [],
+                  isLoadingCapabilities: _isLoadingCapabilities,
                 ),
               ),
             ],
@@ -175,6 +180,7 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
                 Dropdown<int>(
                   label: 'Buffer Size',
                   value: _selectedBufferSize,
+                  enabled: !_isLoadingCapabilities,
 
                   options: _selectedCapabilities!.availableBufferSizes
                       .map(
@@ -192,6 +198,7 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
                 Dropdown<double>(
                   label: 'Sample Rate',
                   value: _selectedSampleRate,
+                  enabled: !_isLoadingCapabilities,
 
                   options: _selectedCapabilities!.availableSampleRates
                       .map(
@@ -232,36 +239,52 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
     );
   }
 
-  void _reloadCapabilities() {
-    final selectedCapabilities = getIt<AudioIORepository>().queryCapabilities(
-      ioType: _selectedIOTypeName,
-      inputDevice: _selectedInputDevice ?? '',
-      outputDevice: _selectedOutputDevice,
-    );
-
+  void _reloadCapabilities() async {
     setState(() {
-      _selectedCapabilities = selectedCapabilities;
-
-      final bufferSizes = selectedCapabilities.availableBufferSizes;
-      final sampleRates = selectedCapabilities.availableSampleRates;
-
-      if (!bufferSizes.contains(_selectedBufferSize)) {
-        _selectedBufferSize = selectedCapabilities.defaultBufferSize;
-      }
-
-      if (!sampleRates.contains(_selectedSampleRate)) {
-        if (sampleRates.contains(41_000.0)) {
-          _selectedSampleRate = 41_000.0;
-        } else if (sampleRates.contains(48_000.0)) {
-          _selectedSampleRate = 48_000.0;
-        } else if (sampleRates.isNotEmpty) {
-          _selectedSampleRate = sampleRates.first;
-        } else {
-          // TODO: This should be reflected in the UI.
-          throw StateError('Capabilities returned empty list of sample rates');
-        }
-      }
+      _isLoadingCapabilities = true;
     });
+
+    try {
+      final selectedCapabilities = await getIt<AudioIORepository>()
+          .queryCapabilities(
+            ioType: _selectedIOTypeName,
+            inputDevice: _selectedInputDevice ?? '',
+            outputDevice: _selectedOutputDevice,
+          );
+      setState(() {
+        _selectedCapabilities = selectedCapabilities;
+        _isLoadingCapabilities = false;
+
+        final bufferSizes = selectedCapabilities.availableBufferSizes;
+        final sampleRates = selectedCapabilities.availableSampleRates;
+
+        if (!bufferSizes.contains(_selectedBufferSize)) {
+          _selectedBufferSize = selectedCapabilities.defaultBufferSize;
+        }
+
+        if (!sampleRates.contains(_selectedSampleRate)) {
+          if (sampleRates.contains(41_000.0)) {
+            _selectedSampleRate = 41_000.0;
+          } else if (sampleRates.contains(48_000.0)) {
+            _selectedSampleRate = 48_000.0;
+          } else if (sampleRates.isNotEmpty) {
+            _selectedSampleRate = sampleRates.first;
+          } else {
+            // TODO: This should be reflected in the UI.
+            throw StateError(
+              'Capabilities returned empty list of sample rates',
+            );
+          }
+        }
+      });
+    } catch (error) {
+      setState(() {
+        _selectedCapabilities = null;
+        _isLoadingCapabilities = false;
+      });
+
+      rethrow;
+    }
   }
 
   void _applySelectedSetup() {
@@ -270,10 +293,5 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
     }
 
     getIt<AudioSetupBloc>().applySetup(selectedSetup);
-
-    setState(() {
-      // Selected setup and effective setup may now be the same, in which
-      // case the widget should redraw.
-    });
   }
 }

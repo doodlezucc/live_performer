@@ -4,6 +4,8 @@ sealed class AudioSetupState {}
 
 final class AudioSetupInitial extends AudioSetupState {}
 
+final class AudioSetupLoadInProgress extends AudioSetupState {}
+
 final class AudioSetupLoadSuccess extends AudioSetupState {
   final AudioIOSetupInfo setupInfo;
 

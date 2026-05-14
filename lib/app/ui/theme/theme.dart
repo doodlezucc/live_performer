@@ -13,7 +13,7 @@ abstract final class AppTheme {
 
   static MenuButtonThemeData get _menuButtonTheme => MenuButtonThemeData(
     style: ButtonStyle(
-      padding: .all(.symmetric(horizontal: 8, vertical: 12)),
+      padding: .all(.symmetric(horizontal: 8, vertical: 8)),
       minimumSize: .all(.zero),
       textStyle: .all(TextStyle(fontWeight: .normal)),
     ),

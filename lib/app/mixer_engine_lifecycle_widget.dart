@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:live_performer/app/app_state.dart';
+import 'package:live_performer/app/data/blocs/audio_setup/bloc.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.g.dart';
 
@@ -62,6 +64,11 @@ class _MixerEngineLifecycleWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    return BlocSelector(
+      // Only trigger the lazy AudioSetupBloc initialization
+      bloc: getIt<AudioSetupBloc>(),
+      selector: (state) => null,
+      builder: (context, _) => widget.child,
+    );
   }
 }

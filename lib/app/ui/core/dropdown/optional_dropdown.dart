@@ -11,6 +11,7 @@ class OptionalDropdown<T extends Object> extends StatelessWidget {
     required this.onSelected,
     required this.options,
     this.expand = false,
+    this.enabled = true,
     super.key,
   });
 
@@ -19,6 +20,7 @@ class OptionalDropdown<T extends Object> extends StatelessWidget {
   final void Function(T? value) onSelected;
   final List<DropdownOption<T>> options;
   final bool expand;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,7 @@ class OptionalDropdown<T extends Object> extends StatelessWidget {
         return DropdownMenu<T?>(
           width: expand ? constraints!.maxWidth : null,
           selectOnly: true,
+          enabled: enabled,
 
           decorationBuilder: (context, controller) =>
               buildDecoration(label: label),
