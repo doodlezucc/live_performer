@@ -25,7 +25,7 @@ class OptionalDropdown<T extends Object> extends StatelessWidget {
     return ConditionalLayoutBuilder(
       enabled: expand,
       builder: (context, constraints) {
-        return DropdownMenu<T>(
+        return DropdownMenu<T?>(
           width: expand ? constraints!.maxWidth : null,
           selectOnly: true,
 
@@ -33,9 +33,14 @@ class OptionalDropdown<T extends Object> extends StatelessWidget {
               buildDecoration(label: label),
 
           initialSelection: value,
-          dropdownMenuEntries: options
-              .map((option) => option.toMenuEntry(context))
-              .toList(),
+          dropdownMenuEntries: [
+            DropdownMenuEntry(
+              value: null,
+              label: '(none)',
+              style: MenuButtonTheme.of(context).style,
+            ),
+            ...options.map((option) => option.toMenuEntry(context)),
+          ],
           onSelected: onSelected,
         );
       },

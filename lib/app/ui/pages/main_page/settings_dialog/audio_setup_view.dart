@@ -6,6 +6,7 @@ import 'package:live_performer/app/data/blocs/audio_setup/state.dart';
 import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
 import 'package:live_performer/app/ui/core/dropdown/dropdown.dart';
 import 'package:live_performer/app/ui/core/dropdown/option.dart';
+import 'package:live_performer/app/ui/core/dropdown/optional_dropdown.dart';
 import 'package:live_performer/app/ui/pages/main_page/settings_dialog/device_config.dart';
 import 'package:live_performer/mixer_engine/mixer_engine_structs.g.dart';
 
@@ -122,26 +123,46 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
             children: [
               Flexible(
                 child: DeviceConfig(
-                  dropdownLabel: 'Input Device',
-                  availableDeviceNames: selectedIOType.inputDevices,
-                  selectedDeviceName: _selectedInputDevice,
-                  channelNames: _selectedCapabilities?.inputChannelNames ?? [],
-                  onSelectDevice: (inputDevice) {
-                    setState(() => _selectedInputDevice = inputDevice);
-                    _reloadCapabilities();
-                  },
+                  deviceDropdown: OptionalDropdown<String>(
+                    expand: true,
+                    label: 'Input Device',
+                    value: _selectedInputDevice,
+
+                    options: selectedIOType.inputDevices.map((deviceName) {
+                      return DropdownOption(
+                        value: deviceName,
+                        label: deviceName,
+                      );
+                    }).toList(),
+
+                    onSelected: (inputDevice) {
+                      setState(() => _selectedInputDevice = inputDevice);
+                      _reloadCapabilities();
+                    },
+                  ),
+                  channelNames: _selectedCapabilities?.inputChannelNames,
                 ),
               ),
               Flexible(
                 child: DeviceConfig(
-                  dropdownLabel: 'Output Device',
-                  availableDeviceNames: selectedIOType.outputDevices,
-                  selectedDeviceName: _selectedOutputDevice,
-                  channelNames: _selectedCapabilities?.outputChannelNames ?? [],
-                  onSelectDevice: (outputDevice) {
-                    setState(() => _selectedOutputDevice = outputDevice!);
-                    _reloadCapabilities();
-                  },
+                  deviceDropdown: Dropdown<String>(
+                    expand: true,
+                    label: 'Output Device',
+                    value: _selectedOutputDevice,
+
+                    options: selectedIOType.outputDevices.map((deviceName) {
+                      return DropdownOption(
+                        value: deviceName,
+                        label: deviceName,
+                      );
+                    }).toList(),
+
+                    onSelected: (outputDevice) {
+                      setState(() => _selectedOutputDevice = outputDevice);
+                      _reloadCapabilities();
+                    },
+                  ),
+                  channelNames: _selectedCapabilities?.outputChannelNames,
                 ),
               ),
             ],

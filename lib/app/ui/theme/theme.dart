@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
+  static final _inputBorderRadius = BorderRadius.circular(4);
+
   static InputDecorationTheme get _inputDecorationTheme => InputDecorationTheme(
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+    border: OutlineInputBorder(borderRadius: _inputBorderRadius),
     contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
     isCollapsed: true,
     isDense: true,
