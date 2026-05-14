@@ -162,9 +162,9 @@ mixer_call_result_t mixer_audio_config_apply(
 
     ABI_TRY
         handle->engine.audioConfig.applySetup({
-            .ioType = setup->ioType,
-            .inputDevice = setup->inputDevice,
-            .outputDevice = setup->outputDevice,
+            .ioType = juce::CharPointer_UTF8(setup->ioType),
+            .inputDevice = juce::CharPointer_UTF8(setup->inputDevice),
+            .outputDevice = juce::CharPointer_UTF8(setup->outputDevice),
             .sampleRate = setup->sampleRate,
             .bufferSize = setup->bufferSize
         });

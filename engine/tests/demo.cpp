@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "abi/util.h"
 #include "mixer_engine/mixer_engine_abi.h"
 #include "engine/engine.h"
 
@@ -80,4 +81,32 @@ TEST_CASE("query capabilities", "[dummy]") {
     }
 
     mixer_free_AudioIOCombinationCapabilities(capabilities);
+}
+
+TEST_CASE("apply setup without input device", "[dummy]") {
+    const auto handle = mixer_engine_create();
+
+    mixer_AudioIOOverview_t *overview = nullptr;
+    mixer_error_t *error = nullptr;
+
+    mixer_audio_config_get_overview(handle, &overview, error);
+
+    // This is basically just a test for Windows DirectSound and will
+    // definitely fail on macOS and probably on most Linux systems.
+    const auto ioType = overview->availableIOTypes[3];
+
+    const auto setup = new mixer_AudioIOSetup_t{
+        .ioType = copyString(ioType.name),
+        .inputDevice = copyString(""),
+        .outputDevice = copyString(ioType.outputDevices[0]),
+        .sampleRate = 44100.0f,
+        .bufferSize = 2560
+    };
+
+    const auto result = mixer_audio_config_apply(handle, setup, error);
+    mixer_free_AudioIOSetup(setup);
+    mixer_free_AudioIOOverview(overview);
+
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
 }
