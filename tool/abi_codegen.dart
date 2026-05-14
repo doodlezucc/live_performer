@@ -99,6 +99,5 @@ final structs = <String, StructDefinition>{
 
   'AudioIOOverview': StructDefinition({
     'availableIOTypes': .struct('AudioIOType').list,
-    'currentSetup': .struct('AudioIOSetupInfo'),
   }),
 };

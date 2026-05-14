@@ -38,7 +38,6 @@ public:
 
     struct Overview {
         juce::Array<IOType> availableIOTypes;
-        IOSetupInfo currentSetup;
     };
 
     [[nodiscard]] Overview getAudioHostOverview() const {
@@ -55,7 +54,6 @@ public:
 
         return {
             .availableIOTypes = availableTypes,
-            .currentSetup = getCurrentSetup()
         };
     }
 

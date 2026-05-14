@@ -1,27 +1,29 @@
-import 'dart:ffi';
-
 import 'package:flutter_test/flutter_test.dart';
+import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.g.dart';
 
 void main() {
+  setUp(() => mixer_initialize());
+  tearDown(() => mixer_shutdown());
+
   test('Run FFI thingy', () {
-    mixer_initialize();
+    late final MixerEngine engine;
 
-    final handle = mixer_engine_create();
+    setUp(() => engine = MixerEngine.create());
+    tearDown(() => engine.destroy());
 
-    expect(handle, isNot(nullptr));
+    final audioIORepository = AudioIORepository(engine: engine);
 
-    final engine = MixerEngine(handle: handle);
-
-    final defaultSetup = engine.audioConfig.reset(
+    audioIORepository.reset(
       numInputChannelsNeeded: 2,
       numOutputChannelsNeeded: 2,
     );
 
+    final defaultSetup = audioIORepository.getSetupInfo();
     print(defaultSetup);
 
-    final overview = engine.audioConfig.getOverview();
+    final overview = audioIORepository.getOverview();
 
     for (final ioType in overview.availableIOTypes) {
       print(ioType.name);
@@ -32,15 +34,11 @@ void main() {
     final ioType = overview.availableIOTypes[0];
 
     print(
-      engine.audioConfig.queryCapabilities(
-        hostName: ioType.name,
+      audioIORepository.queryCapabilities(
+        ioType: ioType.name,
         inputDevice: ioType.inputDevices[0],
         outputDevice: ioType.outputDevices[0],
       ),
     );
-
-    mixer_engine_destroy(handle);
-
-    mixer_shutdown();
   });
 }

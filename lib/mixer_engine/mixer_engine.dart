@@ -4,16 +4,30 @@ import 'package:ffi/ffi.dart';
 
 import 'converter_extensions.dart';
 import 'mixer_engine.g.dart';
-import 'mixer_engine_structs.g.dart';
+
+export 'converter_extensions.dart';
+export 'mixer_engine_structs.g.dart';
 
 class MixerEngine {
   final Pointer<engine_handle_t> _handle;
 
-  late final audioConfig = AudioConfig._(this);
-
   MixerEngine({required Pointer<engine_handle_t> handle}) : _handle = handle;
 
-  void _runGuarded(
+  static MixerEngine create() {
+    final engineHandle = mixer_engine_create();
+
+    if (engineHandle == nullptr) {
+      throw StateError('Failed to create mixer engine');
+    }
+
+    return MixerEngine(handle: engineHandle);
+  }
+
+  void destroy() {
+    mixer_engine_destroy(_handle);
+  }
+
+  void runGuarded(
     int Function(
       Pointer<engine_handle_t> handle,
       Pointer<mixer_error_t> outError,
@@ -40,7 +54,7 @@ class MixerEngine {
     }, calloc);
   }
 
-  Pointer<T> _runGuardedWithResult<T extends Struct>(
+  Pointer<T> runGuardedWithResult<T extends Struct>(
     int Function(
       Pointer<engine_handle_t> handle,
       Pointer<Pointer<T>> outResult,
@@ -51,7 +65,7 @@ class MixerEngine {
     return using((arena) {
       final outResult = arena<Pointer>().cast<Pointer<T>>();
 
-      _runGuarded((handle, outError) => call(handle, outResult, outError));
+      runGuarded((handle, outError) => call(handle, outResult, outError));
 
       if (outResult.value == nullptr) {
         throw StateError('Out parameter returned nullptr');
@@ -59,58 +73,5 @@ class MixerEngine {
 
       return outResult.value;
     }, calloc);
-  }
-}
-
-class AudioConfig {
-  final MixerEngine _engine;
-
-  AudioConfig._(this._engine);
-
-  AudioIOSetupInfo reset({
-    required int numInputChannelsNeeded,
-    required numOutputChannelsNeeded,
-  }) {
-    return _engine
-        ._runGuardedWithResult<mixer_AudioIOSetupInfo_t>(
-          (handle, outResult, outError) => mixer_audio_config_reset(
-            handle,
-            numInputChannelsNeeded,
-            numOutputChannelsNeeded,
-            outResult,
-            outError,
-          ),
-        )
-        .freeToDart();
-  }
-
-  AudioIOOverview getOverview() {
-    return _engine
-        ._runGuardedWithResult<mixer_AudioIOOverview_t>(
-          mixer_audio_config_get_overview,
-        )
-        .freeToDart();
-  }
-
-  AudioIOCombinationCapabilities queryCapabilities({
-    required String hostName,
-    required String inputDevice,
-    required String outputDevice,
-  }) {
-    return using(
-      (arena) => _engine
-          ._runGuardedWithResult<mixer_AudioIOCombinationCapabilities_t>(
-            (handle, outResult, outError) =>
-                mixer_audio_config_query_capabilities(
-                  handle,
-                  hostName.toUtf8(arena),
-                  inputDevice.toUtf8(arena),
-                  outputDevice.toUtf8(arena),
-                  outResult,
-                  outError,
-                ),
-          )
-          .freeToDart(),
-    );
   }
 }
