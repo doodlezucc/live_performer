@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:live_performer/app/ui/core/dropdown/option.dart';
+import 'package:live_performer/app/ui/core/dropdown/optional_dropdown.dart';
 
 class DeviceConfig extends StatelessWidget {
   final String dropdownLabel;
   final String? selectedDeviceName;
-  final void Function(String deviceName) onSelectDevice;
+  final void Function(String? deviceName) onSelectDevice;
   final List<String> availableDeviceNames;
-  final List<String> channelNames;
+  final List<String>? channelNames;
 
   const DeviceConfig({
     required this.dropdownLabel,
@@ -18,35 +20,32 @@ class DeviceConfig extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DropdownMenu<String>(
-            width: constraints.maxWidth,
-            menuStyle: MenuStyle(visualDensity: VisualDensity.compact),
-            expandedInsets: EdgeInsets.zero,
-            label: Text(dropdownLabel),
-            selectOnly: true,
-            initialSelection: selectedDeviceName,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        OptionalDropdown<String>(
+          expand: true,
+          label: dropdownLabel,
+          value: selectedDeviceName!,
 
-            dropdownMenuEntries: availableDeviceNames.map((deviceName) {
-              return DropdownMenuEntry(value: deviceName, label: deviceName);
-            }).toList(),
+          options: availableDeviceNames.map((deviceName) {
+            return DropdownOption(value: deviceName, label: deviceName);
+          }).toList(),
 
-            onSelected: (deviceName) => onSelectDevice(deviceName!),
+          onSelected: onSelectDevice,
+        ),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: 120),
+          child: ListView(
+            shrinkWrap: true,
+            children:
+                channelNames?.indexed.map((channel) {
+                  return Text('${channel.$1 + 1} - "${channel.$2}"');
+                }).toList() ??
+                [],
           ),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: 120),
-            child: ListView(
-              shrinkWrap: true,
-              children: channelNames.indexed
-                  .map((channel) => Text('${channel.$1 + 1} - "${channel.$2}"'))
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

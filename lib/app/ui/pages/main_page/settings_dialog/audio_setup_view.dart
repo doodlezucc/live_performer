@@ -4,6 +4,8 @@ import 'package:live_performer/app/app_state.dart';
 import 'package:live_performer/app/data/blocs/audio_setup/bloc.dart';
 import 'package:live_performer/app/data/blocs/audio_setup/state.dart';
 import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
+import 'package:live_performer/app/ui/core/dropdown/dropdown.dart';
+import 'package:live_performer/app/ui/core/dropdown/option.dart';
 import 'package:live_performer/app/ui/pages/main_page/settings_dialog/device_config.dart';
 import 'package:live_performer/mixer_engine/mixer_engine_structs.g.dart';
 
@@ -92,18 +94,17 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
         mainAxisSize: MainAxisSize.min,
         spacing: 12,
         children: [
-          DropdownMenu<String>(
-            label: Text('Audio IO Type'),
-            selectOnly: true,
-            initialSelection: _selectedIOTypeName,
+          Dropdown<String>(
+            label: 'Audio IO Type',
+            value: _selectedIOTypeName,
 
-            dropdownMenuEntries: widget.overview.availableIOTypes.map((type) {
-              return DropdownMenuEntry(value: type.name, label: type.name);
+            options: widget.overview.availableIOTypes.map((type) {
+              return DropdownOption(value: type.name, label: type.name);
             }).toList(),
 
             onSelected: (typeName) {
               setState(() {
-                _selectedIOTypeName = typeName!;
+                _selectedIOTypeName = typeName;
                 _selectedInputDevice = selectedIOType.inputDevices.firstOrNull;
                 _selectedOutputDevice = selectedIOType.outputDevices.first;
               });
@@ -138,7 +139,7 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
                   selectedDeviceName: _selectedOutputDevice,
                   channelNames: _selectedCapabilities?.outputChannelNames ?? [],
                   onSelectDevice: (outputDevice) {
-                    setState(() => _selectedOutputDevice = outputDevice);
+                    setState(() => _selectedOutputDevice = outputDevice!);
                     _reloadCapabilities();
                   },
                 ),
@@ -150,42 +151,38 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
               mainAxisAlignment: .center,
               spacing: 8,
               children: [
-                DropdownMenu<int>(
-                  label: Text('Buffer Size'),
-                  selectOnly: true,
-                  initialSelection: _selectedBufferSize,
+                Dropdown<int>(
+                  label: 'Buffer Size',
+                  value: _selectedBufferSize,
 
-                  dropdownMenuEntries: _selectedCapabilities!
-                      .availableBufferSizes
-                      .map((bufferSize) {
-                        return DropdownMenuEntry(
+                  options: _selectedCapabilities!.availableBufferSizes
+                      .map(
+                        (bufferSize) => DropdownOption(
                           value: bufferSize,
                           label: '$bufferSize',
-                        );
-                      })
+                        ),
+                      )
                       .toList(),
 
                   onSelected: (bufferSize) {
-                    setState(() => _selectedBufferSize = bufferSize!);
+                    setState(() => _selectedBufferSize = bufferSize);
                   },
                 ),
-                DropdownMenu<double>(
-                  label: Text('Sample Rate'),
-                  selectOnly: true,
-                  initialSelection: _selectedSampleRate,
+                Dropdown<double>(
+                  label: 'Sample Rate',
+                  value: _selectedSampleRate,
 
-                  dropdownMenuEntries: _selectedCapabilities!
-                      .availableSampleRates
-                      .map((sampleRate) {
-                        return DropdownMenuEntry(
+                  options: _selectedCapabilities!.availableSampleRates
+                      .map(
+                        (sampleRate) => DropdownOption(
                           value: sampleRate,
                           label: '$sampleRate',
-                        );
-                      })
+                        ),
+                      )
                       .toList(),
 
                   onSelected: (sampleRate) {
-                    setState(() => _selectedSampleRate = sampleRate!);
+                    setState(() => _selectedSampleRate = sampleRate);
                   },
                 ),
               ],
