@@ -5,9 +5,7 @@ import 'package:live_performer/app/data/blocs/audio_overview.dart';
 import 'package:live_performer/app/data/blocs/audio_setup.dart';
 import 'package:live_performer/app/data/blocs/preferences.dart';
 import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
-import 'package:live_performer/app/ui/core/dropdown/dropdown.dart';
-import 'package:live_performer/app/ui/core/dropdown/option.dart';
-import 'package:live_performer/app/ui/core/dropdown/optional_dropdown.dart';
+import 'package:live_performer/app/ui/core/dropdown.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
 
 import 'single_device_config.dart';
