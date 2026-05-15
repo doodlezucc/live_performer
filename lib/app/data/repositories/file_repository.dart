@@ -4,7 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart' as path_provider;
 
 class FileRepository {
-  static final _directory = path_provider.getApplicationDocumentsDirectory();
+  static final _directory = path_provider.getApplicationSupportDirectory();
 
   static Future<File> _useFile(String fileName) async {
     final directoryPath = (await _directory).path;
