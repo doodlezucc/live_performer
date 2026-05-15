@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:live_performer/app/app_state.dart';
-import 'package:live_performer/app/data/blocs/audio_setup/bloc.dart';
+import 'package:live_performer/app/data/app_state.dart';
+import 'package:live_performer/app/data/blocs/audio_setup.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.g.dart';
 

@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:live_performer/app/app_state.dart';
-import 'package:live_performer/app/data/blocs/audio_overview/bloc.dart';
-import 'package:live_performer/app/data/blocs/audio_overview/state.dart';
-import 'package:live_performer/app/data/blocs/audio_setup/bloc.dart';
-import 'package:live_performer/app/data/blocs/audio_setup/state.dart';
+import 'package:live_performer/app/data/app_state.dart';
+import 'package:live_performer/app/data/blocs/audio_overview.dart';
+import 'package:live_performer/app/data/blocs/audio_setup.dart';
+import 'package:live_performer/app/data/blocs/preferences.dart';
 import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
 import 'package:live_performer/app/ui/core/dropdown/dropdown.dart';
 import 'package:live_performer/app/ui/core/dropdown/option.dart';
 import 'package:live_performer/app/ui/core/dropdown/optional_dropdown.dart';
-import 'package:live_performer/app/ui/pages/main_page/settings_dialog/single_device_config.dart';
-import 'package:live_performer/mixer_engine/mixer_engine_structs.g.dart';
+import 'package:live_performer/mixer_engine/mixer_engine.dart';
+
+import 'single_device_config.dart';
 
 class AudioSetupView extends StatelessWidget {
   const AudioSetupView({super.key});
@@ -288,10 +288,10 @@ class _LoadedAudioSetupViewState extends State<LoadedAudioSetupView> {
   }
 
   void _applySelectedSetup() {
-    if (_selectedCapabilities == null) {
-      throw StateError("Can't apply setup rn");
-    }
-
     getIt<AudioSetupBloc>().applySetup(selectedSetup);
+
+    getIt<PreferencesBloc>().update(
+      (preferences) => preferences.copyWith(audioSetup: () => selectedSetup),
+    );
   }
 }

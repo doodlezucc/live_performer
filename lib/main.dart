@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app/app_state.dart';
+import 'app/data/app_state.dart';
 import 'app/mixer_engine_lifecycle_widget.dart';
 import 'app/ui/pages/main_page/main_page.dart';
 import 'app/ui/theme/theme.dart';
