@@ -4,23 +4,7 @@
 #include "mixer_engine/mixer_engine_abi.h"
 #include "engine/engine.h"
 
-TEST_CASE("one is equal to one", "[dummy]") {
-    REQUIRE(1 == 1);
-}
-
-TEST_CASE("list audio host types", "[dummy]") {
-    Engine engine;
-
-    const auto overview = engine.audioConfig.getAudioHostOverview();
-
-    REQUIRE(!overview.availableIOTypes.isEmpty());
-
-    for (const auto &type: overview.availableIOTypes) {
-        std::cout << type.name << std::endl;
-    }
-}
-
-TEST_CASE("list audio devices ABI", "[dummy]") {
+TEST_CASE("list audio devices", "[dummy]") {
     const auto handle = mixer_engine_create();
 
     mixer_AudioIOOverview_t *overview = nullptr;
@@ -48,6 +32,7 @@ TEST_CASE("list audio devices ABI", "[dummy]") {
     }
 
     mixer_free_AudioIOOverview(overview);
+    mixer_engine_destroy(handle);
 }
 
 TEST_CASE("query capabilities", "[dummy]") {
@@ -81,6 +66,7 @@ TEST_CASE("query capabilities", "[dummy]") {
     }
 
     mixer_free_AudioIOCombinationCapabilities(capabilities);
+    mixer_engine_destroy(handle);
 }
 
 TEST_CASE("apply setup without input device", "[dummy]") {

@@ -80,7 +80,7 @@ public:
 
         for (auto &type: availableTypes) {
             if (type->getTypeName() == hostType) {
-                const auto combination = type->createDevice(outputDevice, inputDevice);
+                const auto combination = juce::rawToUniquePtr(type->createDevice(outputDevice, inputDevice));
 
                 if (combination == nullptr) {
                     throw std::runtime_error("Failed to create device combination");
