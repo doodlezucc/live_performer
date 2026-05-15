@@ -8,9 +8,9 @@ TEST_CASE("list audio devices", "[dummy]") {
     const auto handle = mixer_engine_create();
 
     mixer_AudioIOOverview_t *overview = nullptr;
-    mixer_error_t *error = nullptr;
+    mixer_error_t error;
 
-    const auto result = mixer_audio_config_get_overview(handle, &overview, error);
+    const auto result = mixer_audio_config_get_overview(handle, &overview, &error);
 
     REQUIRE(result == MIXER_OK);
     REQUIRE(overview != nullptr);
@@ -39,9 +39,9 @@ TEST_CASE("query capabilities", "[dummy]") {
     const auto handle = mixer_engine_create();
 
     mixer_AudioIOOverview_t *overview = nullptr;
-    mixer_error_t *error = nullptr;
+    mixer_error_t error;
 
-    mixer_audio_config_get_overview(handle, &overview, error);
+    mixer_audio_config_get_overview(handle, &overview, &error);
 
     mixer_AudioIOCombinationCapabilities_t *capabilities = nullptr;
     const auto result = mixer_audio_config_query_capabilities(
@@ -50,7 +50,7 @@ TEST_CASE("query capabilities", "[dummy]") {
         overview->availableIOTypes[0].inputDevices[0],
         overview->availableIOTypes[0].outputDevices[0],
         &capabilities,
-        error
+        &error
     );
     mixer_free_AudioIOOverview(overview);
 
@@ -73,9 +73,9 @@ TEST_CASE("apply setup without input device", "[dummy]") {
     const auto handle = mixer_engine_create();
 
     mixer_AudioIOOverview_t *overview = nullptr;
-    mixer_error_t *error = nullptr;
+    mixer_error_t error;
 
-    mixer_audio_config_get_overview(handle, &overview, error);
+    mixer_audio_config_get_overview(handle, &overview, &error);
 
     const auto ioType = overview->availableIOTypes[0];
 
@@ -87,13 +87,13 @@ TEST_CASE("apply setup without input device", "[dummy]") {
         .bufferSize = 480
     };
 
-    auto result = mixer_audio_config_apply(handle, setup, error);
+    auto result = mixer_audio_config_apply(handle, setup, &error);
 
     REQUIRE(result == MIXER_OK);
     REQUIRE(error == nullptr);
 
     mixer_AudioIOSetupInfo_t *effectiveSetupInfo;
-    result = mixer_audio_config_get_setup_info(handle, &effectiveSetupInfo, error);
+    result = mixer_audio_config_get_setup_info(handle, &effectiveSetupInfo, &error);
 
     REQUIRE(result == MIXER_OK);
     REQUIRE(error == nullptr);
@@ -124,14 +124,14 @@ TEST_CASE("apply setup without getting overview first", "[dummy]") {
         .bufferSize = 480
     };
 
-    mixer_error_t *error = nullptr;
-    auto result = mixer_audio_config_apply(handle, setup, error);
+    mixer_error_t error;
+    auto result = mixer_audio_config_apply(handle, setup, &error);
 
     REQUIRE(result == MIXER_OK);
     REQUIRE(error == nullptr);
 
     mixer_AudioIOSetupInfo_t *effectiveSetupInfo;
-    result = mixer_audio_config_get_setup_info(handle, &effectiveSetupInfo, error);
+    result = mixer_audio_config_get_setup_info(handle, &effectiveSetupInfo, &error);
 
     REQUIRE(result == MIXER_OK);
     REQUIRE(error == nullptr);

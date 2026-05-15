@@ -7,9 +7,8 @@
 #include "engine/engine.h"
 #include "util.h"
 
-void mixer_error_free(mixer_error_t *error) {
-    freeString(*error);
-    delete error;
+void mixer_error_free(mixer_error_t error) {
+    freeString(error);
 }
 
 void mixer_initialize() {

@@ -44,7 +44,7 @@ class MixerEngine {
 
         if (errorCharPointer != nullptr) {
           final errorMessage = errorCharPointer.toDart();
-          mixer_error_free(outError);
+          mixer_error_free(errorCharPointer);
 
           throw errorMessage;
         } else {

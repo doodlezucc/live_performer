@@ -17,7 +17,7 @@ enum {
 
 typedef char *mixer_error_t;
 
-MIXER_ABI_EXPORT void mixer_error_free(mixer_error_t *error);
+MIXER_ABI_EXPORT void mixer_error_free(mixer_error_t error);
 
 MIXER_ABI_EXPORT void mixer_initialize();
 
