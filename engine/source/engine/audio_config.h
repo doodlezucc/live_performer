@@ -115,6 +115,9 @@ public:
      * @throws std::runtime_error If the setup can't be applied.
      */
     void applySetup(const IOSetup &setup) const {
+        // Force the private "scanDevicesIfNeeded" function to be called
+        audioDeviceManager.getAvailableDeviceTypes();
+
         const auto originalSetup = audioDeviceManager.getAudioDeviceSetup();
         const auto originalState = audioDeviceManager.createStateXml();
 
@@ -131,7 +134,7 @@ public:
             deviceSetup.useDefaultInputChannels = true;
             deviceSetup.useDefaultOutputChannels = true;
 
-            auto const error = audioDeviceManager.setAudioDeviceSetup(deviceSetup, false);
+            auto const error = audioDeviceManager.setAudioDeviceSetup(deviceSetup, true);
 
             if (error.isNotEmpty()) {
                 throw std::runtime_error(error.toStdString());

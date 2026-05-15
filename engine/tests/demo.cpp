@@ -91,22 +91,73 @@ TEST_CASE("apply setup without input device", "[dummy]") {
 
     mixer_audio_config_get_overview(handle, &overview, error);
 
-    // This is basically just a test for Windows DirectSound and will
-    // definitely fail on macOS and probably on most Linux systems.
-    const auto ioType = overview->availableIOTypes[3];
+    const auto ioType = overview->availableIOTypes[0];
 
     const auto setup = new mixer_AudioIOSetup_t{
         .ioType = copyString(ioType.name),
         .inputDevice = copyString(""),
         .outputDevice = copyString(ioType.outputDevices[0]),
-        .sampleRate = 44100.0f,
-        .bufferSize = 2560
+        .sampleRate = 48000.0f,
+        .bufferSize = 480
     };
 
-    const auto result = mixer_audio_config_apply(handle, setup, error);
-    mixer_free_AudioIOSetup(setup);
-    mixer_free_AudioIOOverview(overview);
+    auto result = mixer_audio_config_apply(handle, setup, error);
 
     REQUIRE(result == MIXER_OK);
     REQUIRE(error == nullptr);
+
+    mixer_AudioIOSetupInfo_t *effectiveSetupInfo;
+    result = mixer_audio_config_get_setup_info(handle, &effectiveSetupInfo, error);
+
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+    REQUIRE(effectiveSetupInfo != nullptr);
+
+    REQUIRE(strcmp(effectiveSetupInfo->setup.ioType, setup->ioType) == 0);
+    REQUIRE(strcmp(effectiveSetupInfo->setup.inputDevice, setup->inputDevice) == 0);
+    REQUIRE(strcmp(effectiveSetupInfo->setup.outputDevice, setup->outputDevice) == 0);
+
+    mixer_free_AudioIOSetupInfo(effectiveSetupInfo);
+    mixer_free_AudioIOSetup(setup);
+    mixer_free_AudioIOOverview(overview);
+    mixer_engine_destroy(handle);
+}
+
+TEST_CASE("apply setup without getting overview first", "[dummy]") {
+    const auto handle = mixer_engine_create();
+
+    // This is basically just an egocentric debugging test for DirectSound on a German Windows system
+    // and will definitely fail on other platforms and languages.
+    //
+    // The test previously failed because JUCE's "scanDevicesIfNeeded" function wasn't executed.
+    const auto setup = new mixer_AudioIOSetup_t{
+        .ioType = copyString("DirectSound"),
+        .inputDevice = copyString("Primärer Soundaufnahmetreiber"),
+        .outputDevice = copyString("Primärer Soundtreiber"),
+        .sampleRate = 44100.0f,
+        .bufferSize = 480
+    };
+
+    mixer_error_t *error = nullptr;
+    auto result = mixer_audio_config_apply(handle, setup, error);
+
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+
+    mixer_AudioIOSetupInfo_t *effectiveSetupInfo;
+    result = mixer_audio_config_get_setup_info(handle, &effectiveSetupInfo, error);
+
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+    REQUIRE(effectiveSetupInfo != nullptr);
+
+    REQUIRE(strcmp(effectiveSetupInfo->setup.ioType, setup->ioType) == 0);
+    REQUIRE(strcmp(effectiveSetupInfo->setup.inputDevice, setup->inputDevice) == 0);
+    REQUIRE(strcmp(effectiveSetupInfo->setup.outputDevice, setup->outputDevice) == 0);
+    REQUIRE(effectiveSetupInfo->setup.bufferSize == setup->bufferSize);
+    REQUIRE(effectiveSetupInfo->setup.sampleRate == setup->sampleRate);
+
+    mixer_free_AudioIOSetupInfo(effectiveSetupInfo);
+    mixer_free_AudioIOSetup(setup);
+    mixer_engine_destroy(handle);
 }
