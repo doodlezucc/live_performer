@@ -19,9 +19,7 @@ void _registerFileSystem() {
 
 void _registerEngine() {
   getIt.registerLazySingleton(() => AudioIORepository(engine: getIt()));
-  getIt.registerLazySingleton(
-    () => AudioSetupBloc(repository: getIt())..initialize(),
-  );
+  getIt.registerLazySingleton(() => AudioSetupBloc(repository: getIt()));
   getIt.registerLazySingleton(
     () => AudioOverviewBloc(repository: getIt())..rescan(),
   );

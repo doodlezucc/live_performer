@@ -1,9 +1,13 @@
+import 'package:equatable/equatable.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
 
-final class Preferences {
+final class Preferences extends Equatable {
+  const Preferences({required this.audioSetup});
+
   final AudioIOSetup? audioSetup;
 
-  Preferences({required this.audioSetup});
+  @override
+  List<Object?> get props => [audioSetup];
 
   Preferences copyWith({required AudioIOSetup? Function()? audioSetup}) =>
       .new(audioSetup: audioSetup != null ? audioSetup() : this.audioSetup);

@@ -11,19 +11,28 @@ class AudioSetupBloc extends Cubit<AudioSetupState> {
     : _repository = repository,
       super(AudioSetupInitial());
 
-  void initialize() {
-    resetToDefault(numInputChannelsNeeded: 2, numOutputChannelsNeeded: 2);
+  void initialize({AudioIOSetup? preferredSetup}) async {
+    if (preferredSetup == null) {
+      return _resetToDefault();
+    } else {
+      emit(AudioSetupLoadInProgress());
+
+      try {
+        await _repository.applySetup(setup: preferredSetup);
+        _refreshCurrentSetupInfo();
+      } catch (error) {
+        print('Failed to apply preferred setup: $error');
+        _resetToDefault();
+      }
+    }
   }
 
-  void resetToDefault({
-    required int numInputChannelsNeeded,
-    required int numOutputChannelsNeeded,
-  }) async {
+  void _resetToDefault() async {
     try {
       emit(AudioSetupLoadInProgress());
       await _repository.reset(
-        numInputChannelsNeeded: numInputChannelsNeeded,
-        numOutputChannelsNeeded: numOutputChannelsNeeded,
+        numInputChannelsNeeded: 2,
+        numOutputChannelsNeeded: 2,
       );
     } finally {
       _refreshCurrentSetupInfo();
