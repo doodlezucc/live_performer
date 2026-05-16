@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:live_performer/app/ui/pages/main_page/settings_dialog/settings_dialog.dart';
+
+import 'graph_canvas/graph_canvas.dart';
+import 'settings_dialog/settings_dialog.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -14,7 +16,7 @@ class MainPage extends StatelessWidget {
           icon: Icon(Icons.settings),
         ),
       ),
-      body: Center(child: Text('content pending :)')),
+      body: const GraphCanvas(),
     );
   }
 
