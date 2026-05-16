@@ -12,18 +12,14 @@ class AudioIORepository {
   Future<AudioIOOverview> getOverview() {
     return Isolate.run(
       () => _engine
-          .runGuardedWithResult<mixer_AudioIOOverview_t>(
-            mixer_audio_config_get_overview,
-          )
+          .runGuardedWithResult(mixer_audio_config_get_overview)
           .freeToDart(),
     );
   }
 
   AudioIOSetupInfo getSetupInfo() {
     return _engine
-        .runGuardedWithResult<mixer_AudioIOSetupInfo_t>(
-          mixer_audio_config_get_setup_info,
-        )
+        .runGuardedWithResult(mixer_audio_config_get_setup_info)
         .freeToDart();
   }
 

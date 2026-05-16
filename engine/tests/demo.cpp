@@ -147,3 +147,54 @@ TEST_CASE("apply setup without getting overview first", "[dummy]") {
     mixer_free_AudioIOSetup(setup);
     mixer_engine_destroy(handle);
 }
+
+TEST_CASE("configure simple graph", "[dummy]") {
+    const auto handle = mixer_engine_create();
+    mixer_error_t error = nullptr;
+
+    auto result = mixer_audio_config_reset(handle, 2, 2, &error);
+
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+
+    result = mixer_graph_start(handle, &error);
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+
+    mixer_GraphIONodeInfo_t *ioNodeInfo;
+    result = mixer_graph_get_io_node_info(handle, &ioNodeInfo, &error);
+
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+    REQUIRE(ioNodeInfo != nullptr);
+
+    result = mixer_graph_add_connection(
+        handle,
+        ioNodeInfo->audioInputNodeID, 0,
+        ioNodeInfo->audioOutputNodeID, 0,
+        &error
+    );
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+
+    result = mixer_graph_add_connection(
+        handle,
+        ioNodeInfo->audioInputNodeID, 1,
+        ioNodeInfo->audioOutputNodeID, 1,
+        &error
+    );
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+
+    result = mixer_graph_rebuild(handle, &error);
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+
+
+    result = mixer_graph_stop(handle, &error);
+    REQUIRE(result == MIXER_OK);
+    REQUIRE(error == nullptr);
+
+    mixer_free_GraphIONodeInfo(ioNodeInfo);
+    mixer_engine_destroy(handle);
+}

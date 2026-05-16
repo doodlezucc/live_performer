@@ -64,6 +64,33 @@ MIXER_ABI_EXPORT mixer_call_result_t mixer_audio_config_apply(
     mixer_error_t *outError
 );
 
+
+MIXER_ABI_EXPORT mixer_call_result_t mixer_graph_start(engine_handle_t *handle, mixer_error_t *outError);
+
+MIXER_ABI_EXPORT mixer_call_result_t mixer_graph_stop(engine_handle_t *handle, mixer_error_t *outError);
+
+MIXER_ABI_EXPORT mixer_call_result_t mixer_graph_get_io_node_info(
+    engine_handle_t *handle,
+    mixer_GraphIONodeInfo_t **outInfo,
+    mixer_error_t *outError
+);
+
+MIXER_ABI_EXPORT mixer_call_result_t mixer_graph_rebuild(engine_handle_t *handle, mixer_error_t *outError);
+
+MIXER_ABI_EXPORT mixer_call_result_t mixer_graph_add_connection(
+    engine_handle_t *handle,
+    int32_t sourceID, int32_t sourceChannel,
+    int32_t destinationID, int32_t destinationChannel,
+    mixer_error_t *outError
+);
+
+MIXER_ABI_EXPORT mixer_call_result_t mixer_graph_remove_connection(
+    engine_handle_t *handle,
+    int32_t sourceID, int32_t sourceChannel,
+    int32_t destinationID, int32_t destinationChannel,
+    mixer_error_t *outError
+);
+
 #ifdef __cplusplus
 }
 #endif

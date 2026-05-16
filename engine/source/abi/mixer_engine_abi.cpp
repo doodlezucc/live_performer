@@ -171,3 +171,84 @@ mixer_call_result_t mixer_audio_config_apply(
         return MIXER_OK;
     ABI_CATCH
 }
+
+
+mixer_call_result_t mixer_graph_start(engine_handle_t *handle, mixer_error_t *outError) {
+    if (handle == nullptr) return asErrorInvalidHandle(outError);
+
+    ABI_TRY
+        handle->engine.audioGraph.start();
+        return MIXER_OK;
+    ABI_CATCH
+}
+
+mixer_call_result_t mixer_graph_stop(engine_handle_t *handle, mixer_error_t *outError) {
+    if (handle == nullptr) return asErrorInvalidHandle(outError);
+
+    ABI_TRY
+        handle->engine.audioGraph.stop();
+        return MIXER_OK;
+    ABI_CATCH
+}
+
+mixer_call_result_t mixer_graph_get_io_node_info(
+    engine_handle_t *handle,
+    mixer_GraphIONodeInfo_t **outInfo,
+    mixer_error_t *outError
+) {
+    if (handle == nullptr) return asErrorInvalidHandle(outError);
+
+    ABI_TRY
+        *outInfo = new mixer_GraphIONodeInfo_t{
+            .audioInputNodeID = static_cast<int32_t>(handle->engine.audioGraph.getAudioInputNodeID().uid),
+            .audioOutputNodeID = static_cast<int32_t>(handle->engine.audioGraph.getAudioOutputNodeID().uid)
+        };
+
+        return MIXER_OK;
+    ABI_CATCH
+}
+
+mixer_call_result_t mixer_graph_rebuild(engine_handle_t *handle, mixer_error_t *outError) {
+    if (handle == nullptr) return asErrorInvalidHandle(outError);
+
+    ABI_TRY
+        handle->engine.audioGraph.rebuildGraph();
+        return MIXER_OK;
+    ABI_CATCH
+}
+
+mixer_call_result_t mixer_graph_add_connection(
+    engine_handle_t *handle,
+    const int32_t sourceID, const int32_t sourceChannel,
+    const int32_t destinationID, const int32_t destinationChannel,
+    mixer_error_t *outError
+) {
+    if (handle == nullptr) return asErrorInvalidHandle(outError);
+
+    ABI_TRY
+        handle->engine.audioGraph.addConnection({
+            {NodeID(sourceID), sourceChannel},
+            {NodeID(destinationID), destinationChannel}
+        });
+
+        return MIXER_OK;
+    ABI_CATCH
+}
+
+mixer_call_result_t mixer_graph_remove_connection(
+    engine_handle_t *handle,
+    const int32_t sourceID, const int32_t sourceChannel,
+    const int32_t destinationID, const int32_t destinationChannel,
+    mixer_error_t *outError
+) {
+    if (handle == nullptr) return asErrorInvalidHandle(outError);
+
+    ABI_TRY
+        handle->engine.audioGraph.removeConnection({
+            {NodeID(sourceID), sourceChannel},
+            {NodeID(destinationID), destinationChannel}
+        });
+
+        return MIXER_OK;
+    ABI_CATCH
+}

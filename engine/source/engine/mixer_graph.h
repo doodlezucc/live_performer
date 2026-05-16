@@ -6,18 +6,25 @@
 
 using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 using Node = juce::AudioProcessorGraph::Node;
+using NodeID = juce::AudioProcessorGraph::NodeID;
+using UpdateKind = juce::AudioProcessorGraph::UpdateKind;
 
 class MixerGraph {
 public:
-    MixerGraph(juce::AudioDeviceManager &audioDeviceManager) : audioDeviceManager(audioDeviceManager) {
+    struct NodeState {
+        NodeID id;
+    };
+
+    explicit MixerGraph(juce::AudioDeviceManager &audioDeviceManager) : audioDeviceManager(audioDeviceManager) {
         processor.enableAllBuses();
 
-        audioInputNode = processor.graph->addNode(
+        audioInputNodeID = processor.graph->addNode(
             std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode)
-        );
-        audioOutputNode = processor.graph->addNode(
+        )->nodeID;
+
+        audioOutputNodeID = processor.graph->addNode(
             std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode)
-        );
+        )->nodeID;
 
         processorPlayer.setProcessor(&processor);
     }
@@ -77,16 +84,53 @@ public:
 
         for (int channel = 0; channel < 2; channel++) {
             processor.graph->addConnection({
-                {audioInputNode->nodeID, 1}, // Only use the guitar input from my little interface
+                {audioInputNodeID, 1}, // Only use the guitar input from my little interface
                 {pluginNode->nodeID, channel}
             });
             processor.graph->addConnection({
                 {pluginNode->nodeID, channel},
-                {audioOutputNode->nodeID, channel}
+                {audioOutputNodeID, channel}
             });
         }
     }
 
+    NodeID getAudioInputNodeID() const {
+        return audioInputNodeID;
+    }
+
+    NodeID getAudioOutputNodeID() const {
+        return audioOutputNodeID;
+    }
+
+    NodeState addProcessorNode(std::unique_ptr<juce::AudioProcessor> newProcessor) {
+        const Node::Ptr node = processor.graph->addNode(std::move(newProcessor), std::nullopt, UpdateKind::none);
+
+        nodeMap[node->nodeID.uid] = node;
+
+        return {
+            .id = node->nodeID
+        };
+    }
+
+    void removeNode(const NodeID &id) const {
+        processor.graph->removeNode(id, UpdateKind::none);
+    }
+
+    void addConnection(const juce::AudioProcessorGraph::Connection &connection) const {
+        if (!processor.graph->addConnection(connection, UpdateKind::none)) {
+            throw std::runtime_error("Failed to add connection");
+        }
+    }
+
+    void removeConnection(const juce::AudioProcessorGraph::Connection &connection) const {
+        if (!processor.graph->removeConnection(connection, UpdateKind::none)) {
+            throw std::runtime_error("Failed to remove connection");
+        }
+    }
+
+    void rebuildGraph() const {
+        processor.graph->rebuild();
+    }
 
     void start() {
         audioDeviceManager.addAudioCallback(&processorPlayer);
@@ -102,8 +146,8 @@ private:
     juce::AudioProcessorPlayer processorPlayer;
     MixerGraphProcessor processor;
 
-    std::unordered_map<uint32_t, Node::Ptr> nodeMap;
-    Node::Ptr audioInputNode, audioOutputNode;
+    std::unordered_map<juce::uint32, Node::Ptr> nodeMap;
+    NodeID audioInputNodeID, audioOutputNodeID;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MixerGraph)
 };

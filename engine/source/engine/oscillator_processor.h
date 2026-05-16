@@ -7,25 +7,31 @@ class OscillatorProcessor : public juce::AudioProcessor {
 public:
     //==============================================================================
     OscillatorProcessor()
-        : AudioProcessor(
-            BusesProperties().withInput("Input", juce::AudioChannelSet::stereo()).withOutput(
-                "Output", juce::AudioChannelSet::stereo())) {
+        : AudioProcessor(BusesProperties()
+            .withOutput("Output", juce::AudioChannelSet::stereo())
+        ) {
         oscillator.setFrequency(440.0f);
+
+        // FIXME: Using std::sin is inefficient and should be replaced by a wavetable.
         oscillator.initialise([](float x) { return 0.05f * std::sin(x); });
     }
 
     //==============================================================================
-    void prepareToPlay(double sampleRate, int samplesPerBlock) override {
-        juce::dsp::ProcessSpec spec{sampleRate, static_cast<juce::uint32>(samplesPerBlock), 2};
-        oscillator.prepare(spec);
+    void prepareToPlay(const double sampleRate, const int samplesPerBlock) override {
+        oscillator.prepare({
+            .sampleRate = sampleRate,
+            .maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock),
+            .numChannels = 2
+        });
     }
 
     void releaseResources() override {
     }
 
-    void processBlock(juce::AudioSampleBuffer &buffer, juce::MidiBuffer &) override {
+    void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &) override {
         juce::dsp::AudioBlock<float> block(buffer);
-        juce::dsp::ProcessContextReplacing<float> context(block);
+        const juce::dsp::ProcessContextReplacing context(block);
+
         oscillator.process(context);
     }
 

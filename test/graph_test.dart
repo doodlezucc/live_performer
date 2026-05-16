@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:live_performer/app/data/repositories/audio_graph_repository.dart';
 import 'package:live_performer/app/data/repositories/audio_io_repository.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.g.dart';
@@ -15,7 +16,7 @@ void main() {
     mixer_shutdown();
   });
 
-  test('Get audio IO overview and capabilities', () async {
+  test('Loopback audio input into audio output', () async {
     final audioIORepository = AudioIORepository(engine: engine);
 
     await audioIORepository.reset(
@@ -23,25 +24,25 @@ void main() {
       numOutputChannelsNeeded: 2,
     );
 
+    final audioGraphRepository = AudioGraphRepository(engine: engine);
+
+    audioGraphRepository.start();
+
     final defaultSetup = audioIORepository.getSetupInfo();
     print(defaultSetup);
 
-    final overview = await audioIORepository.getOverview();
+    final ioNodeInfo = audioGraphRepository.getIONodeInfo();
+    audioGraphRepository.addConnection((
+      (ioNodeInfo.audioInputNodeID, 0),
+      (ioNodeInfo.audioOutputNodeID, 0),
+    ));
+    audioGraphRepository.addConnection((
+      (ioNodeInfo.audioInputNodeID, 1),
+      (ioNodeInfo.audioOutputNodeID, 1),
+    ));
+    audioGraphRepository.rebuildGraph();
 
-    for (final ioType in overview.availableIOTypes) {
-      print(ioType.name);
-      print('\t${ioType.inputDevices}');
-      print('\t${ioType.outputDevices}');
-    }
-
-    final ioType = overview.availableIOTypes[0];
-
-    print(
-      await audioIORepository.queryCapabilities(
-        ioType: ioType.name,
-        inputDevice: ioType.inputDevices[0],
-        outputDevice: ioType.outputDevices[0],
-      ),
-    );
+    await Future.delayed(Duration(seconds: 20));
+    audioGraphRepository.stop();
   });
 }

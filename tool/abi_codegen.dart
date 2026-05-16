@@ -100,4 +100,9 @@ final structs = <String, StructDefinition>{
   'AudioIOOverview': StructDefinition({
     'availableIOTypes': .struct('AudioIOType').list,
   }),
+
+  'GraphIONodeInfo': StructDefinition({
+    'audioInputNodeID': .int,
+    'audioOutputNodeID': .int,
+  }),
 };
