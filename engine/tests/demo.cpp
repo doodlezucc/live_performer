@@ -8,7 +8,7 @@ TEST_CASE("list audio devices", "[dummy]") {
     const auto handle = mixer_engine_create();
 
     mixer_AudioIOOverview_t *overview = nullptr;
-    mixer_error_t error;
+    mixer_error_t error = nullptr;
 
     const auto result = mixer_audio_config_get_overview(handle, &overview, &error);
 
@@ -39,7 +39,7 @@ TEST_CASE("query capabilities", "[dummy]") {
     const auto handle = mixer_engine_create();
 
     mixer_AudioIOOverview_t *overview = nullptr;
-    mixer_error_t error;
+    mixer_error_t error = nullptr;
 
     mixer_audio_config_get_overview(handle, &overview, &error);
 
@@ -73,7 +73,7 @@ TEST_CASE("apply setup without input device", "[dummy]") {
     const auto handle = mixer_engine_create();
 
     mixer_AudioIOOverview_t *overview = nullptr;
-    mixer_error_t error;
+    mixer_error_t error = nullptr;
 
     mixer_audio_config_get_overview(handle, &overview, &error);
 
@@ -124,7 +124,7 @@ TEST_CASE("apply setup without getting overview first", "[dummy]") {
         .bufferSize = 480
     };
 
-    mixer_error_t error;
+    mixer_error_t error = nullptr;
     auto result = mixer_audio_config_apply(handle, setup, &error);
 
     REQUIRE(result == MIXER_OK);
