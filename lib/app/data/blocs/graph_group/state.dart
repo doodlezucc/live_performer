@@ -1,93 +1,31 @@
 import 'dart:collection';
-import 'dart:ui';
 
 import 'package:live_performer/app/data/blocs/graph.dart';
 
 class GraphGroupState {
-  final Set<UIGraphNode> _nodes;
+  final Set<Node> _nodes;
   late final nodes = UnmodifiableSetView(_nodes);
 
-  GraphGroupState({Iterable<UIGraphNode> nodes = const []})
-    : _nodes = .from(nodes);
+  GraphGroupState({Iterable<Node> nodes = const []}) : _nodes = .from(nodes);
 
   static GraphGroupState fromGraph(GraphState graph, {required int? groupId}) {
-    if (graph is GraphReady) {
-      return _fromReadyGraph(graph, groupId);
-    } else {
-      throw StateError('Source graph is not ready');
-    }
-  }
-
-  static GraphGroupState _fromReadyGraph(GraphReady graph, int? groupId) {
-    final uiNodes = <UIGraphNode>{};
+    final uiNodes = <Node>{};
 
     if (groupId == null) {
-      uiNodes.addAll(_createNodesFromIOSockets(graph));
+      uiNodes.add(graph.audioInputNode);
+      uiNodes.add(graph.audioOutputNode);
     } else {
-      final groupNode = graph.nodes[groupId]!;
-      final group = groupNode.data as GraphGroupNodeData;
-      uiNodes.addAll(_createNodesFromIOSockets(group));
+      final groupNode = graph.resolveNode(groupId) as GroupNode;
+      uiNodes.add(groupNode.entryNode);
+      uiNodes.add(groupNode.exitNode);
     }
 
-    for (final entry in graph.nodes.entries) {
-      final node = entry.value;
-
-      if (node.parentId == groupId) {
-        final id = entry.key;
-        uiNodes.add(
-          UIGraphNode(
-            offset: node.offset,
-            data: UIGraphNodeData.from(id, node.data),
-          ),
-        );
+    for (final node in graph.nodes.values) {
+      if (node is ScopedNode && (node as ScopedNode).parentId == groupId) {
+        uiNodes.add(node);
       }
     }
 
     return GraphGroupState(nodes: uiNodes);
   }
-
-  static List<UIGraphNode> _createNodesFromIOSockets(HasIOSocketNodes group) {
-    return [
-      UIGraphNode(
-        offset: group.audioInputNode.offset,
-        data: UIGraphIONodeData(type: .audioInput),
-      ),
-      UIGraphNode(
-        offset: group.audioOutputNode.offset,
-        data: UIGraphIONodeData(type: .audioOutput),
-      ),
-    ];
-  }
-}
-
-class UIGraphNode {
-  final Offset offset;
-  final UIGraphNodeData data;
-
-  const UIGraphNode({required this.offset, required this.data});
-}
-
-sealed class UIGraphNodeData {
-  const UIGraphNodeData();
-
-  static UIGraphNodeData from(int id, GraphNodeData data) {
-    return switch (data) {
-      GraphGroupNodeData() => UIGraphGroupNodeData(name: data.name, id: id),
-    };
-  }
-}
-
-enum UIGraphIONodeType { audioInput, audioOutput }
-
-class UIGraphIONodeData extends UIGraphNodeData {
-  final UIGraphIONodeType type;
-
-  const UIGraphIONodeData({required this.type});
-}
-
-class UIGraphGroupNodeData extends UIGraphNodeData {
-  final String name;
-  final int id;
-
-  const UIGraphGroupNodeData({required this.name, required this.id});
 }

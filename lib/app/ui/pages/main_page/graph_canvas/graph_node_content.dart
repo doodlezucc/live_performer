@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:live_performer/app/data/blocs/graph_group.dart';
+import 'package:live_performer/app/data/blocs/graph.dart';
 import 'package:live_performer/app/ui/core/infinite_canvas.dart';
 
 class GraphNodeContent extends StatelessWidget {
@@ -9,7 +9,7 @@ class GraphNodeContent extends StatelessWidget {
     super.key,
   });
 
-  final UIGraphNodeData data;
+  final Node data;
   final CanvasNodeContext canvasNode;
 
   @override
@@ -24,9 +24,15 @@ class GraphNodeContent extends StatelessWidget {
 
   Widget _buildChild(BuildContext context) {
     return switch (data) {
-      UIGraphIONodeData(type: final type) => Text('IO (${type.name})'),
+      GroupNode(name: final name) => Text(name),
 
-      UIGraphGroupNodeData(name: final name) => Text('Group ($name)'),
+      GroupEntrySocketNode() => Text('Entry'),
+      GroupExitSocketNode() => Text('Exit'),
+
+      AudioInputNode() => Text('Audio Input'),
+      AudioOutputNode() => Text('Audio Output'),
+
+      _ => throw UnimplementedError('Unimplemented node type $data'),
     };
   }
 }
