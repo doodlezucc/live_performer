@@ -1,38 +1,45 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import 'canvas_node_controller.dart';
+
 typedef CanvasNodeContext = ({bool isDragging});
 
-class InfiniteCanvasNode extends StatefulWidget {
-  final Offset offset;
-  final void Function(Offset position) onMove;
+class CanvasNode extends StatefulWidget {
+  final CanvasNodeController controller;
+
   final GestureTapCallback? onTap;
   final GestureLongPressStartCallback? onLongPressStart;
   final Widget Function(CanvasNodeContext context) builder;
 
-  const InfiniteCanvasNode({
+  const CanvasNode({
     super.key,
-    required this.offset,
-    required this.onMove,
+    required this.controller,
     this.onTap,
     this.onLongPressStart,
     required this.builder,
   });
 
   @override
-  State<InfiniteCanvasNode> createState() => _InfiniteCanvasNodeState();
+  State<CanvasNode> createState() => _CanvasNodeState();
 }
 
-class _InfiniteCanvasNodeState extends State<InfiniteCanvasNode> {
+class _CanvasNodeState extends State<CanvasNode> {
   bool isDragging = false;
   late Offset _startPointerPosition;
   late Offset _startBoardPosition;
 
   @override
   Widget build(BuildContext context) {
-    return Transform.translate(
-      transformHitTests: true,
-      offset: widget.offset,
+    return ValueListenableBuilder(
+      valueListenable: widget.controller,
+      builder: (context, state, child) {
+        return Transform.translate(
+          transformHitTests: true,
+          offset: state.offset,
+          child: child,
+        );
+      },
       child: GestureDetector(
         dragStartBehavior: DragStartBehavior.down,
         onLongPressStart: widget.onLongPressStart,
@@ -40,11 +47,12 @@ class _InfiniteCanvasNodeState extends State<InfiniteCanvasNode> {
         onPanDown: (details) {
           setState(() => isDragging = true);
           _startPointerPosition = details.localPosition;
-          _startBoardPosition = widget.offset;
+          _startBoardPosition = widget.controller.value.offset;
         },
         onPanUpdate: (details) {
-          widget.onMove(
-            _startBoardPosition +
+          widget.controller.value = (
+            offset:
+                _startBoardPosition +
                 (details.localPosition - _startPointerPosition),
           );
         },

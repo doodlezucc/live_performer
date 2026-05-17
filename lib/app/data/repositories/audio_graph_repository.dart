@@ -1,10 +1,10 @@
 import 'package:live_performer/mixer_engine/mixer_engine.dart';
 import 'package:live_performer/mixer_engine/mixer_engine.g.dart';
 
-typedef NodeIDAndChannel = (int id, int channel);
-typedef NodeConnection = (
-  NodeIDAndChannel source,
-  NodeIDAndChannel destination,
+typedef _NodeIDAndChannel = (int id, int channel);
+typedef _NodeConnection = (
+  _NodeIDAndChannel source,
+  _NodeIDAndChannel destination,
 );
 
 class AudioGraphRepository {
@@ -23,7 +23,8 @@ class AudioGraphRepository {
 
   void rebuildGraph() => _engine.runGuarded(mixer_graph_rebuild);
 
-  void addConnection(NodeConnection connection) {
+  // ignore: library_private_types_in_public_api
+  void addConnection(_NodeConnection connection) {
     _engine.runGuarded(
       (handle, outError) => mixer_graph_add_connection(
         handle,
@@ -36,7 +37,8 @@ class AudioGraphRepository {
     );
   }
 
-  void removeConnection(NodeConnection connection) {
+  // ignore: library_private_types_in_public_api
+  void removeConnection(_NodeConnection connection) {
     _engine.runGuarded(
       (handle, outError) => mixer_graph_remove_connection(
         handle,

@@ -1,18 +1,26 @@
+import 'dart:ui';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:live_performer/app/data/repositories/audio_graph_repository.dart';
 
 import 'state.dart';
 
-class GraphRootBloc extends Cubit<GraphRootState> {
+class GraphBloc extends Cubit<GraphState> {
   final AudioGraphRepository _repository;
 
-  GraphRootBloc({required AudioGraphRepository repository})
+  GraphBloc({required AudioGraphRepository repository})
     : _repository = repository,
-      super(GraphRootInitial());
+      super(GraphInitial());
 
   void initialize() {
     final ioNodeInfo = _repository.getIONodeInfo();
-    emit(GraphRootReady(ioNodeInfo: ioNodeInfo));
+    emit(
+      GraphReady(
+        ioNodeInfo: ioNodeInfo,
+        audioInputNode: .new(offset: Offset(-100, 0)),
+        audioOutputNode: .new(offset: Offset(100, 0)),
+      ),
+    );
   }
 
   void addConnection(NodeConnection connection) {

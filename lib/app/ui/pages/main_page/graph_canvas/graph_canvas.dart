@@ -1,34 +1,60 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
-import 'package:live_performer/app/ui/core/infinite_canvas/infinite_canvas.dart';
-import 'package:live_performer/app/ui/core/infinite_canvas/infinite_canvas_node.dart';
+import 'package:live_performer/app/data/blocs/graph_group.dart';
+import 'package:live_performer/app/ui/core/infinite_canvas.dart';
+import 'package:live_performer/app/ui/pages/main_page/graph_canvas/graph_node_content.dart';
 
 class GraphCanvas extends StatefulWidget {
-  const GraphCanvas({super.key});
+  const GraphCanvas({required this.nodes, super.key});
+
+  final SetBase<UIGraphNode> nodes;
 
   @override
   State<GraphCanvas> createState() => _GraphCanvasState();
 }
 
 class _GraphCanvasState extends State<GraphCanvas> {
-  Offset _exampleNodeOffset = Offset.zero;
+  late final nodeControllers = <UIGraphNode, CanvasNodeController>{};
+
+  @override
+  void initState() {
+    super.initState();
+
+    for (final node in widget.nodes) {
+      nodeControllers[node] = CanvasNodeController((offset: node.offset));
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in nodeControllers.values) {
+      controller.dispose();
+    }
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return InfiniteCanvas(
-      background: Container(color: Colors.black),
+      onDoubleTap: _addNode,
       children: [
-        InfiniteCanvasNode(
-          offset: _exampleNodeOffset,
-          onMove: (offset) => setState(() {
-            _exampleNodeOffset = offset;
-          }),
-          builder: (node) => Container(
-            color: node.isDragging ? Colors.red : Colors.black,
-            width: 120,
-            height: 120,
-          ),
-        ),
+        ...nodeControllers.entries.map((entry) {
+          final node = entry.key;
+          final controller = entry.value;
+
+          return CanvasNode(
+            controller: controller,
+            builder: (canvasNode) =>
+                GraphNodeContent(data: node.data, canvasNode: canvasNode),
+          );
+        }),
       ],
     );
+  }
+
+  void _addNode(Offset offset) {
+    // TODO
   }
 }

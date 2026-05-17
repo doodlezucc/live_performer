@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'graph_canvas/graph_canvas.dart';
+import 'graph_canvas/graph_canvas_view.dart';
 import 'settings_dialog/settings_dialog.dart';
 
 class MainPage extends StatelessWidget {
@@ -16,7 +16,7 @@ class MainPage extends StatelessWidget {
           icon: Icon(Icons.settings),
         ),
       ),
-      body: const GraphCanvas(),
+      body: const GraphCanvasView(),
     );
   }
 
